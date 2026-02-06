@@ -208,45 +208,6 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         JMenu toolsMenu = new JMenu("工具");
         toolsMenu.add(searchScripturesMenuItem);
 
-        JMenuItem customConfigMenuItem = new JMenuItem("自定义配置");
-        customConfigMenuItem.addActionListener(actionEvent -> {
-            String customConfigPath = (String) JOptionPane.showInputDialog(frame,
-                    "请输入系统配置文件的完全路径：",
-                    "自定义系统配置",
-                    JOptionPane.INFORMATION_MESSAGE,
-                    null,
-                    null,
-                    SystemConfig.USER_CONFIG_FILE_PATH);
-            logger.info("自定义系统配置文件路径：" + customConfigPath);
-
-            if (customConfigPath == null || customConfigPath.trim().isEmpty()) {
-                return;
-            }
-
-            File file = new File(customConfigPath.trim());
-            if (file.exists() && file.isFile() && file.canRead()) {
-                logger.debug("继续检查是否合法的配置文件");
-                try (InputStreamReader reader = new InputStreamReader(
-                        new FileInputStream(file), StandardCharsets.UTF_8)) {
-                    new Properties().load(reader);
-                    logger.info("文件加载成功！");
-                    try {
-                        SystemConfig.update(file.getAbsolutePath().replaceAll("\\\\", "\\\\\\\\"));
-                        JOptionPane.showMessageDialog(frame, "文件加载成功，请重启该软件使其生效。", "提示", JOptionPane.INFORMATION_MESSAGE);
-                    } catch (Exception e) {
-                        logger.error("更新失败！", e);
-                        JOptionPane.showMessageDialog(frame, "更新失败！", "错误提示", JOptionPane.ERROR_MESSAGE);
-                    }
-                } catch (Exception e) {
-                    logger.error("自定义配置文件加载失败！");
-                    JOptionPane.showMessageDialog(frame, "文件加载失败！", "错误提示", JOptionPane.ERROR_MESSAGE);
-                }
-            } else {
-                logger.warn("文件错误！");
-                JOptionPane.showMessageDialog(frame, "文件不存在，或不是文件！", "错误提示", JOptionPane.ERROR_MESSAGE);
-            }
-        });
-
         JMenuItem displayConfigMenuItem = new JMenuItem("查看配置信息");
         displayConfigMenuItem.addActionListener(actionEvent -> {
             StringBuilder msgBuilder = new StringBuilder("<html><ul style=\"font-family: Consolas, PingFang SC, Microsoft YaHei; list-style-type: none\">");
@@ -279,7 +240,6 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         });
 
         JMenu optionsMenu = new JMenu("选项");
-        optionsMenu.add(customConfigMenuItem);
         optionsMenu.add(displayConfigMenuItem);
 
         JMenuBar menuBar = new JMenuBar();
@@ -649,7 +609,9 @@ public class WorshipFormServiceImpl implements WorshipFormService {
                                     pptFile.getAbsolutePath() +
                                     "</p>" +
                                     "<p>你还需要做一些检查工作：</p>" +
-                                    "<ol><li>圣餐诗歌需要手动调整以符合圣礼需要；</li>" +
+                                    "<ol><li>如果不保留教会名称，请删除首页的占位符</li>" +
+                                    "<li>各环节的经文是否溢出边界</li>" +
+                                    "<li>圣餐诗歌需要手动调整以符合圣礼需要</li>" +
                                     "<li>还有更多需要细心检查的细节</li></ol></html>";
                             JTextPane f = createTextPane(message);
                             JOptionPane.showMessageDialog(frame, f, "提示", JOptionPane.INFORMATION_MESSAGE);

@@ -16,21 +16,20 @@ import java.util.Set;
 
 /**
  * 系统配置
- * <p>使用用户目录。此软件的配置文件夹的名称是.worship-ppt，在里面放配置数据。</p>
- * TODO 用户配置每次都丢失 需要解决
+ * <p>直接加载根目录下config目录中的worship-ppt.config配置文件。</p>
  */
 @Slf4j
 public class SystemConfig {
 
     /**
-     * 应用配置文件夹
+     * 应用配置文件夹（用于缓存敬拜实体等数据）
      */
     public final static String APP_CONFIG_DIR_PATH = ".worship-ppt";
 
     /**
-     * 配置文件的名称
+     * 配置文件名称
      */
-    public final static String APP_CONFIG_NAME = "system.config";
+    public final static String CONFIG_FILE_NAME = "worship-ppt.config";
 
     /**
      * 核心配置
@@ -54,86 +53,27 @@ public class SystemConfig {
 
     // 完成对properties的初始化, 初始化的结果是用户配置与核心配置会合并到properties中
     static {
-        // 1.先去用户目录(每个系统可能不同)看是否已经有配置
-        // System.getProperty("user.home")获得用户主路径
-        File appDir = new File(System.getProperty("user.home"), APP_CONFIG_DIR_PATH);
-        if (!appDir.exists()) {
-            // 创建一个隐藏目录.worship-ppt
-            logger.info("创建目录{}", APP_CONFIG_DIR_PATH);
-            boolean flag = appDir.mkdirs();
-            if (!flag) {
-                logger.error("目录{}创建失败，系统退出！", appDir.getAbsolutePath());
-                JOptionPane.showMessageDialog(
-                        null,
-                        "目录" + appDir.getAbsolutePath() + "创建失败，系统退出！",
-                        "错误提示",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                System.exit(1);
-            }
-        }
-
-        // 查找appDir目录中的APP_CONFIG_NAME配置文件（user_home/.worship-ppt/system.config）
-        File userConfigFile = new File(appDir, APP_CONFIG_NAME);
         ClassLoader classLoader = SystemConfig.class.getClassLoader();
-        if (userConfigFile.exists()) {
-            logger.info("配置文件已经存在，直接使用。");
-        } else {
-            logger.info("用户目录不存在配置文件，拷贝一份过去。");
-            try (InputStream inputStream = classLoader.getResourceAsStream(APP_CONFIG_NAME)) { // 读取jar包中的默认配置文件(system.config)
-                if (inputStream != null) {
-                    FileUtils.copyToFile(inputStream, userConfigFile);
-                } else {
-                    logger.error("配置文件初始化失败，系统退出！");
-                    JOptionPane.showMessageDialog(
-                            null,
-                            "配置文件初始化失败，系统退出！",
-                            "错误提示",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-                    System.exit(1);
-                }
-            } catch (Exception e) {
-                logger.error("配置文件初始化失败，系统退出！", e);
-                JOptionPane.showMessageDialog(
-                        null,
-                        "配置文件初始化失败，系统退出！",
-                        "错误提示",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                System.exit(1);
-            }
-        }
 
-        // 2.读取配置文件的路径
-        String userPropertiesPath = null;
-        // 解析默认配置文件
-        // 取得默认配置中key为SystemConfigPath的值，表示用户配置的路径
-        // Properties的解析规则会导致路径中的'\'丢失，这也是用户配置总是加载失败的根本原因
-        // userPropertiesPath = cacheSystemConfig.getProperty("SystemConfigPath");
+        // 1.从根目录的config/worship-ppt.config加载用户配置
+        Properties userProperties = null;
+        String userConfigPath = "config/" + CONFIG_FILE_NAME;
+        USER_CONFIG_FILE_PATH = userConfigPath;
 
-        // 更改为使用NIO的Files来解决读取出错的问题
-        List<String> configurations = null;
-        try {
-            configurations = Files.readAllLines(Paths.get(userConfigFile.getAbsolutePath()), StandardCharsets.UTF_8);
-            userPropertiesPath = (configurations.get(0).split("="))[1];
-            logger.info("SystemConfigPath={}", userPropertiesPath);
-        } catch (IOException ex) {
-            logger.error("读取SystemConfigPath失败！", ex);
+        File configFile = new File(userConfigPath);
+        if (!configFile.exists()) {
+            logger.error("配置文件{}不存在，系统退出！", configFile.getAbsolutePath());
             JOptionPane.showMessageDialog(
                     null,
-                    "读取SystemConfigPath失败！",
+                    "配置文件" + configFile.getAbsolutePath() + "不存在，系统退出！",
                     "错误提示",
                     JOptionPane.ERROR_MESSAGE
             );
             System.exit(1);
         }
 
-
-        // 3.加载用户配置
-        Properties userProperties = null;
         try {
-            userProperties = loadUserProperties(userPropertiesPath);
+            userProperties = loadUserProperties(userConfigPath);
         } catch (Exception e) {
             logger.error("用户配置加载失败！", e);
             JOptionPane.showMessageDialog(
@@ -142,23 +82,10 @@ public class SystemConfig {
                     "错误提示",
                     JOptionPane.ERROR_MESSAGE
             );
-            userPropertiesPath = JOptionPane.showInputDialog("你可以输入正确的配置文件的路径，再重新启动:)");
-            try {
-                update(userPropertiesPath);// 获取用户配置错误后更新
-                userProperties = loadUserProperties(userPropertiesPath);
-            } catch (IOException e2) {
-                logger.error("用户配置加载失败！", e2);
-                JOptionPane.showMessageDialog(
-                        null,
-                        "用户配置再次尝试加载失败！",
-                        "错误提示",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                System.exit(1);
-            }
+            System.exit(1);
         }
 
-        // 4.加载核心配置
+        // 2.加载核心配置
         Properties coreProperties = new Properties();
         try (InputStreamReader reader = new InputStreamReader(
                 // 从ClassPath中获取核心配置
@@ -182,15 +109,13 @@ public class SystemConfig {
             System.exit(1);
         }
 
-        // 5.合并配置
+        // 3.合并配置
         try {
             // 合并核心配置
             properties.putAll(coreProperties);
             logger.info("合并了核心配置");
 
             mergeUserProperties(userProperties);
-
-            USER_CONFIG_FILE_PATH = userPropertiesPath;
         } catch (Exception e) {
             logger.error("合并配置失败！", e);
             JOptionPane.showMessageDialog(
@@ -308,38 +233,14 @@ public class SystemConfig {
     }
 
     /**
-     * 更新用户配置的路径
+     * 更新用户配置的路径（已废弃，配置路径固定为config/worship-ppt.config）
      *
-     * @param propFilePath
-     * @throws IOException
+     * @param propFilePath 配置文件路径（已忽略）
+     * @throws IOException 不再抛出异常
      */
+    @Deprecated
     public static void update(String propFilePath) throws IOException {
-        // "SystemConfigPath=propFilePath"
-        String conf = "SystemConfigPath=" + propFilePath;
-        // 用户主路径下的配置目录（user_home/.worship-ppt）
-        File appDir = new File(System.getProperty("user.home"), APP_CONFIG_DIR_PATH);
-        // 配置目录下的APP_CONFIG_NAME配置文件
-        File systemConfigFile = new File(appDir, APP_CONFIG_NAME);
-
-        // 将用户输入的配置文件路径写入默认配置
-        FileUtils.writeStringToFile(systemConfigFile, conf, StandardCharsets.UTF_8);
-
-        // 测试写入的内容
-//        Path path = Paths.get(systemConfigFile.getAbsolutePath());
-//        logger.info("默认配置的绝对路径：" + path);
-//        List<String> strings = Files.readAllLines(path, StandardCharsets.UTF_8);
-//        for (String string : strings) {
-//            logger.info("写入后读取到配置：" + string);
-//        }
-
-        // 重新加载配置
-        Properties userProperties = loadUserProperties(propFilePath);
-        // 合并用户配置
-        mergeUserProperties(userProperties);
-        // 给用户的配置路径动态赋值
-        USER_CONFIG_FILE_PATH = propFilePath;
-        // 测试打印重新输入后的用户配置路径
-        logger.info("重新输入的用户配置文件路径" + USER_CONFIG_FILE_PATH);
+        logger.warn("update方法已废弃，配置路径固定为config/worship-ppt.config");
     }
 
     /**
@@ -354,6 +255,7 @@ public class SystemConfig {
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(propFilePath), StandardCharsets.UTF_8)) {
             userProperties.load(reader);
             logger.info("用户配置加载成功");
+            logger.debug("配置路径: " + propFilePath);
 
             // 获取用户配置中所有的key
             Set<Object> keySet = userProperties.keySet();

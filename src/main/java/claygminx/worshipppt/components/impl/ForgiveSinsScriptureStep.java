@@ -75,8 +75,10 @@ public class ForgiveSinsScriptureStep extends AbstractWorshipStep {
                 if (rawText != null && rawText.contains("主领：")){
                     TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_RED);
                     textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
+                    textRun.setBold(true);
                 }
                 if (rawText != null && rawText.contains(getCustomPlaceholder())) {
+
                     textRun.setText(rawText.replace(getCustomPlaceholder(), titleAndScripture[1]));
                     textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
                     TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
@@ -87,11 +89,11 @@ public class ForgiveSinsScriptureStep extends AbstractWorshipStep {
                 if (rawText != null && rawText.contains("会众：")){
                     textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
                     TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
+                    textRun.setBold(true);
                     if (breakTag) break;
                 }
                 if (rawText != null && rawText.contains("感谢主赦免我们的罪")){
                     textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
-//                    textRun.setBaselineOffset(1.2);
                     TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
                 }
             }

@@ -3,12 +3,9 @@ package claygminx.worshipppt.components.impl;
 import claygminx.worshipppt.common.entity.PreachEntity;
 import claygminx.worshipppt.exception.PPTLayoutException;
 import claygminx.worshipppt.util.TextUtil;
+import org.apache.poi.xslf.usermodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.poi.xslf.usermodel.XMLSlideShow;
-import org.apache.poi.xslf.usermodel.XSLFSlide;
-import org.apache.poi.xslf.usermodel.XSLFSlideLayout;
-import org.apache.poi.xslf.usermodel.XSLFTextShape;
 
 /**
  * 证道摘要阶段
@@ -33,13 +30,20 @@ public class PreachSummaryStep extends AbstractWorshipStep {
 
         XSLFTextShape placeholder = TextUtil.getPlaceholderSafely(slide, 0, getLayout(), "标题部分");
 
-        String text = placeholder.getText();
-        placeholder.setText(text.replace(getCustomPlaceholder(), preachEntity.getTitle()));
+        XSLFTextRun textRun = TextUtil.clearAndCreateTextRun(placeholder);
+        textRun.setText(preachEntity.getTitle());
+        textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+        textRun.setFontSize(AbstractWorshipStep.DEFAULT_STEP_COVER_FONT_SIZE);
+        textRun.setBold(true);
+        TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
 
         placeholder = TextUtil.getPlaceholderSafely(slide, 1, getLayout(), "经文编号部分");
-        text = placeholder.getText();
-        placeholder.setText(text.replace(getCustomPlaceholder(), preachEntity.getScriptureNumber()));
-
+        textRun = TextUtil.clearAndCreateTextRun(placeholder);
+        textRun.setText("证道经文: " + preachEntity.getScriptureNumber());
+        textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+        textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
+        textRun.setBold(true);
+        TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
 
         logger.info("证道摘要幻灯片制作完成");
     }

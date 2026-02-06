@@ -26,8 +26,6 @@ public class SummonStep extends AbstractWorshipStep {
     private final String scriptureNumber;
     private final ScriptureService scriptureService;
 
-    private final static String STEP_NAME = "宣召";
-
     public SummonStep(XMLSlideShow ppt, String layout, ScriptureService scriptureService, String scriptureNumber) {
         super(ppt, layout);
         this.scriptureService = scriptureService;

@@ -27,7 +27,7 @@ public class Dict {
         public final static String MASTER_GENERAL_LAYOUT_NAME = "ppt.master.generalLayout.name";
         public final static String MASTER_INITIATION_POETRY_SLIDE_ORDER = "ppt.master.initiation.poetrySlide.order";
         // 宣召
-        public final static String SUMMON_SCRIPTURE_FONT_SIZE = "ppt.preachScripture.fontSize";
+        public final static String SUMMON_SCRIPTURE_FONT_SIZE = "ppt.summonScripture.fontSize";
         // 赦罪
         public final static String FORGIVE_SINS_SCRIPTURE_LINE_SPACING = "ppt.forgiveSinsScripture.lineSpacing";
         // 诗歌：封面
@@ -113,7 +113,7 @@ public class Dict {
     }
 
     /**
-     * Gitee属性
+     * Gitee属性,目前废弃
      */
     public interface GiteeProperty {
         String URL = "gitee.url";

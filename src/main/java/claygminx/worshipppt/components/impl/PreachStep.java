@@ -34,6 +34,8 @@ public class PreachStep extends AbstractWorshipStep {
         TextUtil.setScriptureFontColor(preachTitleTextRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
         preachTitleTextRun.setText("《" + preachEntity.getTitle() + "》");
 
+        // 此页面还有第二个占位符，证道大纲，目前只能手动输入
+
         logger.info("证道幻灯片制作完成");
     }
 }
