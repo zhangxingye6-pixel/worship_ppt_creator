@@ -6,7 +6,7 @@
 
     <groupId>lazarus</groupId>
     <artifactId>worship-ppt-auto-creator</artifactId>
-    <version>v1.5.8</version>
+    <version>v1.5.9</version>
 
     <name>Worship PPT Auto Creator</name>
     <description>一个用于自动制作敬拜PPT的小工具</description>
@@ -178,6 +178,9 @@
         </profile>
         <profile>
             <id>mac-intel</id>
+            <properties>
+                <mac.jdk.path>C:\Program Files\Java\java17-mac-intel</mac.jdk.path>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -194,8 +197,8 @@
                             <platform>mac</platform>
                             <createZipball>true</createZipball>
                             <createTarball>false</createTarball>
-                            <jdkPath>C:\Program Files\Java\java17-mac-intel</jdkPath>
-                            <jrePath>C:\Program Files\Java\java17-mac-intel</jrePath>
+                            <jdkPath>${mac.jdk.path}</jdkPath>
+                            <jrePath>${mac.jdk.path}</jrePath>
                             <macConfig>
                                 <generateDmg>false</generateDmg>
                                 <generatePkg>false</generatePkg>
@@ -222,6 +225,9 @@
         </profile>
         <profile>
             <id>mac-arm</id>
+            <properties>
+                <mac.jdk.path>C:\Program Files\Java\java17-mac-arm</mac.jdk.path>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -238,8 +244,8 @@
                             <platform>mac</platform>
                             <createZipball>true</createZipball>
                             <createTarball>false</createTarball>
-                            <jdkPath>C:\Program Files\Java\java17-mac-arm</jdkPath>
-                            <jrePath>C:\Program Files\Java\java17-mac-arm</jrePath>
+                            <jdkPath>${mac.jdk.path}</jdkPath>
+                            <jrePath>${mac.jdk.path}</jrePath>
                             <macConfig>
                                 <generateDmg>false</generateDmg>
                                 <generatePkg>false</generatePkg>
@@ -254,6 +260,55 @@
                         <executions>
                             <execution>
                                 <id>bundling-for-mac-arm</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>package</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>mac-native</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.github.fvarrui</groupId>
+                        <artifactId>javapackager</artifactId>
+                        <version>1.7.2</version>
+                        <configuration>
+                            <mainClass>claygminx.worshipppt.Main</mainClass>
+                            <bundleJre>true</bundleJre>
+                            <customizedJre>true</customizedJre>
+                            <url>https://github.com/ClayGminx/worship-ppt</url>
+                            <generateInstaller>false</generateInstaller>
+                            <administratorRequired>false</administratorRequired>
+                            <platform>mac</platform>
+                            <createZipball>true</createZipball>
+                            <createTarball>false</createTarball>
+                            <jdkPath>${java.home}</jdkPath>
+                            <jrePath>${java.home}</jrePath>
+                            <macConfig>
+                                <generateDmg>false</generateDmg>
+                                <generatePkg>false</generatePkg>
+                            </macConfig>
+                            <additionalResources>
+                                <additionalResource>config</additionalResource>
+                                <additionalResource>PPT模板</additionalResource>
+                                <additionalResource>数据库</additionalResource>
+                                <additionalResource>README.md</additionalResource>
+                            </additionalResources>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>bundling-for-mac-native</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>package</goal>
