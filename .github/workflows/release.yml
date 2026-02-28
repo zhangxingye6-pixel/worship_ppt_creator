@@ -12,7 +12,7 @@ jobs:
   build-and-release:
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [windows-latest, macos-13, macos-14]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -31,25 +31,17 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Download macOS Intel JDK (Windows)
-        shell: bash
-        run: |
-          mkdir -p mac-intel-jdk
-          curl -L "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.9%2B9/OpenJDK17U-jdk_x64_mac_hotspot_17.0.9_9.tar.gz" -o mac-intel-jdk/jdk.tar.gz
-          tar -xzf mac-intel-jdk/jdk.tar.gz -C mac-intel-jdk --strip-components=1
-        if: matrix.os == 'windows-latest'
-
       - name: Build Windows version
         run: mvn clean package -Pwindows
         if: matrix.os == 'windows-latest'
 
-      - name: Build macOS Intel version (cross-compile from Windows)
-        run: mvn clean package -Pmac-intel -Dmac.jdk.path="${{ github.workspace }}/mac-intel-jdk"
-        if: matrix.os == 'windows-latest'
-
-      - name: Build macOS ARM version (native)
+      - name: Build macOS Intel version (macOS 13)
         run: mvn clean package
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-13'
+
+      - name: Build macOS ARM version (macOS 14)
+        run: mvn clean package
+        if: matrix.os == 'macos-14'
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
