@@ -6,10 +6,10 @@
 
     <groupId>lazarus</groupId>
     <artifactId>worship-ppt-auto-creator</artifactId>
-    <version>v1.5.10</version>
+    <version>v1.5.11</version>
 
     <name>Worship PPT Auto Creator</name>
-    <description>一个用于自动制作敬拜PPT的小工具</description>
+    <description>制作敬拜PPT的小工具</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -179,7 +179,8 @@
         <profile>
             <id>mac-intel</id>
             <properties>
-                <mac.jdk.path>C:\Program Files\Java\java17-mac-intel</mac.jdk.path>
+                <mac.jdk.path>C:\Program Files\Java\java17-mac-intel\Contents\Home</mac.jdk.path>
+                <app.suffix>-intel</app.suffix>
             </properties>
             <build>
                 <plugins>
@@ -189,6 +190,7 @@
                         <version>1.7.2</version>
                         <configuration>
                             <mainClass>claygminx.worshipppt.Main</mainClass>
+                            <name>Worship PPT Auto Creator${app.suffix}</name>
                             <bundleJre>true</bundleJre>
                             <customizedJre>true</customizedJre>
                             <url>https://github.com/ClayGminx/worship-ppt</url>
@@ -226,7 +228,8 @@
         <profile>
             <id>mac-arm</id>
             <properties>
-                <mac.jdk.path>C:\Program Files\Java\java17-mac-arm</mac.jdk.path>
+                <mac.jdk.path>C:\Program Files\Java\java17-mac-arm\Contents\Home</mac.jdk.path>
+                <app.suffix>-arm</app.suffix>
             </properties>
             <build>
                 <plugins>
@@ -236,6 +239,7 @@
                         <version>1.7.2</version>
                         <configuration>
                             <mainClass>claygminx.worshipppt.Main</mainClass>
+                            <name>Worship PPT Auto Creator${app.suffix}</name>
                             <bundleJre>true</bundleJre>
                             <customizedJre>true</customizedJre>
                             <url>https://github.com/ClayGminx/worship-ppt</url>

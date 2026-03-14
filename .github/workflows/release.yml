@@ -9,21 +9,10 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
-    strategy:
-      matrix:
-        os: [windows-latest, macos-13, macos-14]
-    runs-on: ${{ matrix.os }}
-
+  build-windows:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Configure git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Setup Java
         uses: actions/setup-java@v3
@@ -32,20 +21,86 @@ jobs:
           distribution: 'temurin'
 
       - name: Build Windows version
-        run: mvn clean package -Pwindows
-        if: matrix.os == 'windows-latest'
+        run: mvn clean package -Pwindows -DskipTests
 
-      - name: Build macOS Intel version (macOS 13)
-        run: mvn clean package
-        if: matrix.os == 'macos-13'
-
-      - name: Build macOS ARM version (macOS 14)
-        run: mvn clean package
-        if: matrix.os == 'macos-14'
+      - name: Rename artifact
+        shell: pwsh
+        run: |
+          cd target
+          $zipFile = Get-ChildItem -Filter "*.zip" | Select-Object -First 1
+          if ($zipFile) {
+            Rename-Item $zipFile.FullName "worship-ppt-creator-windows.zip"
+          } else {
+            exit 1
+          }
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/*.zip
+          files: target/worship-ppt-creator-windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-macos-intel:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build macOS Intel
+        run: mvn clean package -Pmac-native -DskipTests
+
+      - name: Fix permissions
+        run: |
+          APP_DIR=$(find target -name "*.app" -type d | head -1)
+          chmod +x "$APP_DIR/Contents/MacOS/universalJavaApplicationStub" || true
+          chmod -R +x "$APP_DIR/Contents/PlugIns/jre.jre/Contents/Home/bin" || true
+
+      - name: Rename artifact
+        run: |
+          cd target
+          mv *.zip worship-ppt-creator-macos-intel.zip
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/worship-ppt-creator-macos-intel.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-macos-arm:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build macOS ARM
+        run: mvn clean package -Pmac-native -DskipTests
+
+      - name: Fix permissions
+        run: |
+          APP_DIR=$(find target -name "*.app" -type d | head -1)
+          chmod +x "$APP_DIR/Contents/MacOS/universalJavaApplicationStub" || true
+          chmod -R +x "$APP_DIR/Contents/PlugIns/jre.jre/Contents/Home/bin" || true
+
+      - name: Rename artifact
+        run: |
+          cd target
+          mv *.zip worship-ppt-creator-macos-arm64.zip
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/worship-ppt-creator-macos-arm64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
