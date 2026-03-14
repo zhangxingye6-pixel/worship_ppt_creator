@@ -42,7 +42,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-macos-intel:
-    runs-on: macos-13-large
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v3
 
