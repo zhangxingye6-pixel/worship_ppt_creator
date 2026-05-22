@@ -366,7 +366,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
 
             Box modeBox = Box.createHorizontalBox();
             int strutWidth = 5;
-            modeBox.add(new JLabel("敬拜诗歌模式："));
+            modeBox.add(new JLabel("模式："));
             modeBox.add(Box.createHorizontalStrut(strutWidth));
             modeBox.add(mode1Radio);
             modeBox.add(Box.createHorizontalStrut(strutWidth));
@@ -584,6 +584,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
     private void addSubmitPanel(Box rootBox) {
         JButton submitButton = new JButton("生成PPT" +
                 "");
+        submitButton.setBackground(new Color(43, 102, 211));
         JPanel panel = new JPanel();
         panel.add(submitButton);
         rootBox.add(panel);
@@ -1147,6 +1148,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
      */
     private void addPoetryTableHeader(Box tableBox) {
         Box header = Box.createHorizontalBox();
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(80, 80, 80)));
         tableBox.add(header);
 
         addTableColumn(header, "诗歌名称", POETRY_TABLE_COLUMN_WIDTH_1);
@@ -1305,7 +1307,6 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         JPanel column = new JPanel();
         column.setPreferredSize(new Dimension(width, TABLE_HEADER_HEIGHT));
         column.setLayout(new GridBagLayout());// 这种布局可以让文字垂直居中
-        column.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, Color.GRAY));// 上下两线
 
         // 布局
         GridBagConstraints gbc = new GridBagConstraints();
@@ -1455,12 +1456,14 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         deleteButton.setToolTipText("删除当前行");
         clearButton.setToolTipText("清空当前行的输入框");
 
+        deleteButton.setBackground(new Color(245, 101, 81));
+
         Box hBox = Box.createHorizontalBox();
         hBox.add(insertButton);
         hBox.add(Box.createHorizontalStrut(PADDING_LEFT));
-        hBox.add(deleteButton);
-        hBox.add(Box.createHorizontalStrut(PADDING_LEFT));
         hBox.add(clearButton);
+        hBox.add(Box.createHorizontalStrut(PADDING_LEFT));
+        hBox.add(deleteButton);
 
         leftMiddle(rowBox, hBox, POETRY_TABLE_COLUMN_WIDTH_3);
 
