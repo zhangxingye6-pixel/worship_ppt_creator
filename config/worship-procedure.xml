@@ -11,12 +11,12 @@
         <worship-step name="三一颂" layout="三一颂" class="claygminx.worshipppt.components.impl.OdeToTheTrinityStep" data="'宣召诗歌'"/>
         <worship-step name="宣召" layout="宣召" class="claygminx.worshipppt.components.impl.SummonStep" data="#scriptureService, scriptureContent.summon"/>
         <worship-step name="敬拜诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌颂扬敬拜上帝', poetryContent.worshipPoetryAlbum.poetryList[0].name"/>
-        <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(0, 1)"/>
+        <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(0, 1), '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
         <worship-step name="公祷经文" layout="公祷经文" class="claygminx.worshipppt.components.impl.PublicPrayScriptureStep" data="#scriptureService, scriptureContent.publicPray"/>
         <worship-step name="公祷事项" layout="公祷事项" class="claygminx.worshipppt.components.impl.PublicPrayContentStep" data="''"/>
         <worship-step name="读经" layout="读经" class="claygminx.worshipppt.components.impl.ReadingScriptureStep" data="#scriptureService, scriptureContent.readingScripture"/>
         <worship-step name="敬拜诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌颂扬敬拜上帝', poetryContent.worshipPoetryAlbum.poetryList[1].name"/>
-        <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(1, 2)"/>
+        <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(1, 2), '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
         <worship-step name="认罪经文" layout="认罪经文" class="claygminx.worshipppt.components.impl.ConfessScriptureStep" data="#scriptureService, scriptureContent.confess"/>
         <worship-step name="默想认罪" layout="默想认罪" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="赦罪" layout="赦罪" class="claygminx.worshipppt.components.impl.ForgiveSinsScriptureStep" data="#scriptureService, scriptureContent.forgiveSins"/>
@@ -51,12 +51,12 @@
         <worship-step name="三一颂" layout="三一颂" class="claygminx.worshipppt.components.impl.OdeToTheTrinityStep" data="'宣召诗歌'"/>
         <worship-step name="宣召" layout="宣召" class="claygminx.worshipppt.components.impl.SummonStep" data="#scriptureService, scriptureContent.summon"/>
         <worship-step name="敬拜诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌颂扬敬拜上帝', poetryContent.worshipPoetryAlbum.poetryList[0].name"/>
-        <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(0, 1)"/>
+        <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(0, 1), '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
         <worship-step name="公祷经文" layout="公祷经文" class="claygminx.worshipppt.components.impl.PublicPrayScriptureStep" data="#scriptureService, scriptureContent.publicPray"/>
         <worship-step name="公祷事项" layout="公祷事项" class="claygminx.worshipppt.components.impl.PublicPrayContentStep" data="''"/>
         <worship-step name="读经" layout="读经" class="claygminx.worshipppt.components.impl.ReadingScriptureStep" data="#scriptureService, scriptureContent.readingScripture"/>
         <worship-step name="敬拜诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌颂扬敬拜上帝', poetryContent.worshipPoetryAlbum.poetryList[1].name"/>
-        <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(1, 2)"/>
+        <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(1, 2), '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
         <worship-step name="认罪经文" layout="认罪经文" class="claygminx.worshipppt.components.impl.ConfessScriptureStep" data="#scriptureService, scriptureContent.confess"/>
         <worship-step name="默想认罪" layout="默想认罪" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="赦罪" layout="赦罪" class="claygminx.worshipppt.components.impl.ForgiveSinsScriptureStep" data="#scriptureService, scriptureContent.forgiveSins"/>
@@ -104,12 +104,12 @@
         <worship-step name="三一颂" layout="三一颂" class="claygminx.worshipppt.components.impl.OdeToTheTrinityStep" data="'宣召诗歌'"/>
         <worship-step name="宣召" layout="宣召" class="claygminx.worshipppt.components.impl.SummonStep" data="#scriptureService, scriptureContent.summon"/>
         <worship-step name="敬拜诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌颂扬敬拜上帝', poetryContent.worshipPoetryAlbum.poetryList[0].name"/>
-        <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(0, 1)"/>
+        <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(0, 1), '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
         <worship-step name="公祷经文" layout="公祷经文" class="claygminx.worshipppt.components.impl.PublicPrayScriptureStep" data="#scriptureService, scriptureContent.publicPray"/>
         <worship-step name="公祷事项" layout="公祷事项" class="claygminx.worshipppt.components.impl.PublicPrayContentStep" data="''"/>
         <worship-step name="读经" layout="读经" class="claygminx.worshipppt.components.impl.ReadingScriptureStep" data="#scriptureService, scriptureContent.readingScripture"/>
         <worship-step name="敬拜诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌颂扬敬拜上帝', poetryContent.worshipPoetryAlbum.poetryList[1].name"/>
-        <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(1, 2)"/>
+        <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(1, 2), '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
         <worship-step name="认罪经文" layout="认罪经文" class="claygminx.worshipppt.components.impl.ConfessScriptureStep" data="#scriptureService, scriptureContent.confess"/>
         <worship-step name="默想认罪" layout="默想认罪" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="赦罪" layout="赦罪" class="claygminx.worshipppt.components.impl.ForgiveSinsScriptureStep" data="#scriptureService, scriptureContent.forgiveSins"/>
