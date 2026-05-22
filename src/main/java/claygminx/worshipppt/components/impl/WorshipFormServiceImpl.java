@@ -41,6 +41,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
     // 组件
     private final JFrame frame;
     private ButtonGroup modelRadioGroup;
+    private ButtonGroup poetryModeGroup;
     private JTextField worshipDateTextField;
     private JTextField churchNameTextField;
     private Map<String, List<JTextField[]>> poetryListMap;
@@ -345,6 +346,30 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         if (!poetryListMap.containsKey(name)) {
             List<JTextField[]> list = new LinkedList<>();
             poetryListMap.put(name, list);
+        }
+
+        // 在敬拜诗歌面板顶部添加模式选项
+        if (PoetryAlbumName.WORSHIP_POETRY.equals(name)) {
+            PoetryContentEntity poetryContent = worshipEntity.getPoetryContent();
+            int selectedMode = 0;
+            if (poetryContent != null) {
+                selectedMode = poetryContent.getMode();
+            }
+            JRadioButton mode1Radio = new JRadioButton(PoetryMode.MODE_1_1, selectedMode == 0);
+            JRadioButton mode2Radio = new JRadioButton(PoetryMode.MODE_2_1, selectedMode != 0);
+
+            poetryModeGroup = new ButtonGroup();
+            poetryModeGroup.add(mode1Radio);
+            poetryModeGroup.add(mode2Radio);
+
+            Box modeBox = Box.createHorizontalBox();
+            int strutWidth = 5;
+            modeBox.add(new JLabel("敬拜诗歌模式："));
+            modeBox.add(Box.createHorizontalStrut(strutWidth));
+            modeBox.add(mode1Radio);
+            modeBox.add(Box.createHorizontalStrut(strutWidth));
+            modeBox.add(mode2Radio);
+            tableBox.add(modeBox);
         }
 
         // 标题
@@ -684,6 +709,16 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         String selectedModel = worshipEntity.getCover().getModel();
         PoetryContentEntity poetryContentEntity = new PoetryContentEntity();
         worshipEntity.setPoetryContent(poetryContentEntity);
+
+        int poetryMode = 0;
+        Enumeration<AbstractButton> poetryRadioElements = poetryModeGroup.getElements();
+        while (poetryRadioElements.hasMoreElements()) {
+            AbstractButton radioElement = poetryRadioElements.nextElement();
+            if (radioElement.isSelected()) {
+                poetryMode = PoetryMode.MODE_2_1.equals(radioElement.getText()) ? 1 : 0;
+            }
+        }
+        poetryContentEntity.setMode(poetryMode);
 
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("以下诗歌面板的输入不合法:\n");

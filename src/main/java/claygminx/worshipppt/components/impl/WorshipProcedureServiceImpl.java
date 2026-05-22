@@ -79,13 +79,72 @@ public class WorshipProcedureServiceImpl implements WorshipProcedureService {
                     throw new PPTLayoutException(e.getMessage(), e);
                 }
 
+                // 获取敬拜诗歌模式
+                int poetryMode = 0;
+                if (worshipEntity.getPoetryContent() != null) {
+                    poetryMode = worshipEntity.getPoetryContent().getMode();
+                }
+
+                // 2-1模式：查找第二首敬拜诗歌的模板元素
+                Element song2TitleTemplate = null;
+                Element song2ContentTemplate = null;
+                if (poetryMode == 1) {
+                    for (Object obj : stepElements) {
+                        Element el = (Element) obj;
+                        String elName = el.attributeValue("name");
+                        if ("敬拜诗歌".equals(elName)) {
+                            String data = el.attributeValue("data");
+                            if (data != null) {
+                                if (data.contains("[1].name")) {
+                                    song2TitleTemplate = el;
+                                } else if (data.contains("subList(1, 2)")) {
+                                    song2ContentTemplate = el;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // 按照XML定义的顺序获取
+                boolean firstWorshipContentAdded = false;
                 for (Object stepElementObj : stepElements) {
                     Element stepElement = (Element) stepElementObj;
+                    String stepName = stepElement.attributeValue("name");
+
+                    // 2-1模式：原来第二首敬拜诗歌改为第三首，数据索引1改为2
+                    if (poetryMode == 1 && firstWorshipContentAdded && "敬拜诗歌".equals(stepName)) {
+                        String data = stepElement.attributeValue("data");
+                        if (data != null) {
+                            String newData = data
+                                    .replace("[1].name", "[2].name")
+                                    .replace("subList(1, 2)", "subList(2, 3)");
+                            if (!newData.equals(data)) {
+                                Element modified = stepElement.createCopy();
+                                modified.addAttribute("data", newData);
+                                stepElement = modified;
+                            }
+                        }
+                    }
 
                     WorshipStep worshipStep = getWorshipStep(stepElement, context, worshipEntity);
                     if (worshipStep != null) {
                         result.add(worshipStep);
+                    }
+
+                    // 2-1模式：第一首敬拜歌谱后紧跟第二首的标题和歌谱
+                    if (poetryMode == 1 && !firstWorshipContentAdded && "敬拜诗歌".equals(stepName)
+                            && stepElement.attributeValue("data") != null
+                            && stepElement.attributeValue("data").contains("subList(0, 1)")) {
+                        firstWorshipContentAdded = true;
+
+                        if (song2TitleTemplate != null) {
+                            WorshipStep titleStep = getWorshipStep(song2TitleTemplate.createCopy(), context, worshipEntity);
+                            if (titleStep != null) result.add(titleStep);
+                        }
+                        if (song2ContentTemplate != null) {
+                            WorshipStep contentStep = getWorshipStep(song2ContentTemplate.createCopy(), context, worshipEntity);
+                            if (contentStep != null) result.add(contentStep);
+                        }
                     }
                 }
                 break;

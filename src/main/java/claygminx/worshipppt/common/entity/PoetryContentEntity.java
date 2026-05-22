@@ -12,6 +12,11 @@ public class PoetryContentEntity implements Serializable {
     private static final long serialVersionUID = -9015678366106352037L;
 
     /**
+     * 敬拜诗歌模式：0-1-1模式，1-2-1模式
+     */
+    private int mode;
+
+    /**
      * 祷告诗歌
      */
     private PoetryAlbumEntity prayPoetryAlbum;
@@ -102,6 +107,14 @@ public class PoetryContentEntity implements Serializable {
         this.holyCommunionPoetryAlbum = holyCommunionPoetryAlbum;
     }
 
+    public int getMode() {
+        return mode;
+    }
+
+    public void setMode(int mode) {
+        this.mode = mode;
+    }
+
     /**
      * 导出诗歌清单
      * @return 诗歌清单，列表里每个元素不可能是{@code null}
@@ -135,7 +148,8 @@ public class PoetryContentEntity implements Serializable {
     @Override
     public String toString() {
         return "PoetryContentEntity{" +
-                "prayPoetryAlbum=" + prayPoetryAlbum +
+                "mode=" + mode +
+                ", prayPoetryAlbum=" + prayPoetryAlbum +
                 ", practisePoetryAlbum=" + practisePoetryAlbum +
                 ", worshipPoetryAlbum=" + worshipPoetryAlbum +
                 ", responsePoetryAlbum=" + responsePoetryAlbum +

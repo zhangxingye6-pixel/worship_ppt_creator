@@ -155,6 +155,14 @@ public class Dict {
     }
 
     /**
+     * 诗歌面板显示的两种模式
+     */
+    public static class PoetryMode {
+        public final static String MODE_1_1 = "1-1模式";
+        public final static String MODE_2_1 = "2-1模式";
+    }
+
+    /**
      * 诗歌集的名称
      */
     public static class PoetryAlbumName {
