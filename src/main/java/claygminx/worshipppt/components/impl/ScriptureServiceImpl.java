@@ -180,7 +180,7 @@ public class ScriptureServiceImpl implements ScriptureService {
 
                     // 取得结束的节号
                     Integer endVerse = verses.get(0);
-                    PreparedStatement preparedStatement = connection.prepareStatement("SELECT Scripture FROM Bible WHERE Book=? AND Chapter=? AND Verse>=? AND Scripture!='-'");
+                    PreparedStatement preparedStatement = connection.prepareStatement("SELECT Scripture FROM Bible WHERE Book=? AND Chapter=? AND Verse<=? AND Scripture!='-'");
                     preparedStatement.setInt(1, scriptureNumber.getBookId());
                     preparedStatement.setInt(2, scriptureSection.getChapter());
                     preparedStatement.setInt(3, endVerse);
@@ -204,7 +204,7 @@ public class ScriptureServiceImpl implements ScriptureService {
 
                 } else if (scriptureSection.getStatus() == ScriptureStatusEnum.TO_END_OF_CHAPTER) {
                     // 需要从节开始，到本章的结束
-                    logger.debug("存在到章结束的标记，从节所对应的节开始查询，直到章的结尾");
+                    logger.debug("存在到章结束的标记，从对应的节开始查询，直到章的结尾");
                     // 取得开始的节编号
                     Integer startVerse = verses.get(0);
 

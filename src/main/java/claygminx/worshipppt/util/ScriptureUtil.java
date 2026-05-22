@@ -176,7 +176,11 @@ public class ScriptureUtil {
             startChapter = Integer.parseInt(split[0].split(":")[0]);
             endChapter = Integer.parseInt(split[1].split(":")[0]);
         } catch (NumberFormatException e) {
-            throw new ScriptureNumberException("章节编号错误，请重新检查！");
+            throw new ScriptureNumberException("章节编号格式可能有误，请重新检查！");
+        }
+        // 检查是否有跨章节
+        if (startChapter == endChapter || startChapter > endChapter){
+            throw new ScriptureNumberException("请检查章节编号是否正确，或者是否符合跨章分隔符'->'的使用条件");
         }
 
         // 检查章节列表是否为空，如果为空，则创建一个
@@ -188,12 +192,13 @@ public class ScriptureUtil {
             ScriptureSectionEntity scriptureSectionEntity = new ScriptureSectionEntity();
             List<Integer> verses = new ArrayList<>();
             scriptureSectionEntity.setChapter(i);
-            // 如果有间隔的章节，节列表为null，表示全章；首位需要特殊处理，使用枚举标记
+            // 如果有间隔的章节，节列表为null，表示全章；首尾需要特殊处理，使用枚举标记
             if (i == startChapter) {
                 // 检查是否存在节号
                 if (split[0].contains(":")) {
                     // 将节号加入节列表
                     verses.add(Integer.parseInt(split[0].split(":")[1]));
+                    scriptureSectionEntity.setVerses(verses);
                     scriptureSectionEntity.setStatusToEndOfChapter();
                     // 本章本节的信息已经全部找到，添加到章节列表中
                 }
@@ -201,9 +206,10 @@ public class ScriptureUtil {
                 // 是中间章节, 将节列表置空表示全章节
                 scriptureSectionEntity.setVerses(null);
             } else if (i == endChapter) {
-                if (split[1].contains(";")) {
-                    scriptureSectionEntity.setStatusFromStartOfChapter();
+                if (split[1].contains(":")) {
                     verses.add(Integer.parseInt(split[1].split(":")[1]));
+                    scriptureSectionEntity.setVerses(verses);
+                    scriptureSectionEntity.setStatusFromStartOfChapter();
                 }
             }
             sectionList.add(scriptureSectionEntity);

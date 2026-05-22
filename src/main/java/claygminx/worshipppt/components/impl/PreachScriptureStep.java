@@ -44,6 +44,7 @@ public class PreachScriptureStep extends AbstractWorshipStep {
     public void execute() throws WorshipStepException, PPTLayoutException {
         String scriptureNumber;
         scriptureNumber = preachEntity.getScriptureNumber();
+
         logger.info("开始制作证道经文" + scriptureNumber);
 
         ScriptureEntity scriptureEntity;
@@ -52,7 +53,7 @@ public class PreachScriptureStep extends AbstractWorshipStep {
             logger.info("经文格式" + Dict.ScriptureProperty.FORMAT3);
             scriptureEntity = scriptureService.getScriptureWithFormat(scriptureNumber, SystemConfig.getString(Dict.ScriptureProperty.FORMAT3));
         } catch (ScriptureNumberException e) {
-            throw new WorshipStepException("解析经文编号 [" + scriptureNumber + "] 时出错！", e);
+            throw new WorshipStepException("解析经文编号 [" + scriptureNumber + "] 时出错:" + "\n" + "msg:" + e.getMessage(), e);
         }
         if (scriptureEntity == null) {
             return;
@@ -79,6 +80,10 @@ public class PreachScriptureStep extends AbstractWorshipStep {
                 // 获取第0占位符（经文章节编号部分，不需要清空）
                 placeholder = TextUtil.getPlaceholderSafely(slide, 0, getLayout(), "标题部分");
                 XSLFTextRun titleTextRun = TextUtil.clearAndCreateTextRun(placeholder);
+                // 针对跨章节的'->'符号，进行一次替换
+                if (scriptureNumber.contains("->")) {
+                    scriptureNumber = scriptureNumber.replace("->", "-");
+                }
                 titleTextRun.setText(scriptureNumber);
                 titleTextRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
                 titleTextRun.setFontSize(SystemConfig.getUserConfigOrDefault(Dict.PPTProperty.GENERAL_TITLE_FONT_SIZE, AbstractWorshipStep.DEFAULT_TITLE_FONT_SIZE));

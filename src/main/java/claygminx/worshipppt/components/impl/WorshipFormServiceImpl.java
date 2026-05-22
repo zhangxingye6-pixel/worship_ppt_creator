@@ -347,8 +347,10 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             List<JTextField[]> list = new LinkedList<>();
             poetryListMap.put(name, list);
         }
+        // 标题
+        addTableTitle(tableBox, name);
 
-        // 在敬拜诗歌面板顶部添加模式选项
+        // 在标题下方、表头上方添加模式选项
         if (PoetryAlbumName.WORSHIP_POETRY.equals(name)) {
             PoetryContentEntity poetryContent = worshipEntity.getPoetryContent();
             int selectedMode = 0;
@@ -371,9 +373,6 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             modeBox.add(mode2Radio);
             tableBox.add(modeBox);
         }
-
-        // 标题
-        addTableTitle(tableBox, name);
 
         // 表头
         addPoetryTableHeader(tableBox);
@@ -1174,7 +1173,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         }
 
         // 添加一行到表格中
-        int rowIndex = poetryIndex + ROW_INDEX_OFFSET;
+        int rowIndex = poetryIndex + getRowIndexOffset(albumName);
         Box rowBox = Box.createHorizontalBox();
         try {
             tableBox.add(rowBox, rowIndex);
@@ -1493,8 +1492,8 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         return (action) -> run(() -> {
             int currentIndex = getIndexOfRowBox(tableBox, rowBox);
             if (currentIndex != -1) {
-                int nextIndex = currentIndex - ROW_INDEX_OFFSET + 1;
                 String albumName = tableBox.getParent().getName();
+                int nextIndex = currentIndex - getRowIndexOffset(albumName) + 1;
                 addPoetryTableRow(tableBox, albumName, nextIndex);
                 tableBox.getRootPane().revalidate();
             }
@@ -1520,7 +1519,8 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             } else {
                 int currentIndex = getIndexOfRowBox(tableBox, rowBox);
                 if (currentIndex != -1) {
-                    int index = currentIndex - ROW_INDEX_OFFSET;
+                    String albumName = tableBox.getParent().getName();
+                    int index = currentIndex - getRowIndexOffset(albumName);
                     logger.debug("删除第{}行诗歌", index + 1);
                     textFieldsList.remove(index);
                     tableBox.remove(currentIndex);
@@ -1542,7 +1542,8 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         return (action) -> run(() -> {
             int currentIndex = getIndexOfRowBox(tableBox, rowBox);
             if (currentIndex != -1) {
-                int index = currentIndex - ROW_INDEX_OFFSET;
+                String albumName = tableBox.getParent().getName();
+                int index = currentIndex - getRowIndexOffset(albumName);
                 logger.debug("清空第{}行诗歌", index + 1);
                 JTextField[] textFields = textFieldsList.get(index);
                 textFields[0].setText("");
@@ -1596,6 +1597,14 @@ public class WorshipFormServiceImpl implements WorshipFormService {
      */
     private boolean isEmpty(String str) {
         return str == null || str.trim().isEmpty();
+    }
+
+    /**
+     * 计算诗歌行在 tableBox 中的索引偏移量
+     * 敬拜诗歌因标题和表头之间插入了模式选项框，偏移量为3；其他诗歌为2
+     */
+    private static int getRowIndexOffset(String albumName) {
+        return PoetryAlbumName.WORSHIP_POETRY.equals(albumName) ? 3 : 2;
     }
 
     /**
