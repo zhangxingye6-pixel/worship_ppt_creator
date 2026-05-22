@@ -9,98 +9,56 @@ permissions:
   contents: write
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            profile: windows
+            artifact: worship-ppt-creator-windows.zip
+
+          - os: macos-13
+            profile: mac-native
+            artifact: worship-ppt-creator-macos-intel.zip
+
+          - os: macos-14
+            profile: mac-native
+            artifact: worship-ppt-creator-macos-arm64.zip
+
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build Windows version
-        run: mvn clean package -Pwindows -DskipTests
+      - name: Build
+        run: mvn clean package -P${{ matrix.profile }} -DskipTests
+
+      - name: Fix macOS permissions
+        if: runner.os == 'macOS'
+        run: |
+          APP_DIR=$(find target -name "*.app" -type d | head -1)
+          if [ -n "$APP_DIR" ]; then
+            chmod +x "$APP_DIR/Contents/MacOS/universalJavaApplicationStub" || true
+            chmod -R +x "$APP_DIR/Contents/PlugIns/jre.jre/Contents/Home/bin" || true
+          fi
 
       - name: Rename artifact
         shell: pwsh
         run: |
-          cd target
-          $zipFile = Get-ChildItem -Filter "*.zip" | Select-Object -First 1
-          if ($zipFile) {
-            Rename-Item $zipFile.FullName "worship-ppt-creator-windows.zip"
-          } else {
+          $zipFile = Get-ChildItem -Path "target" -Filter "*.zip" | Select-Object -First 1
+          if (-not $zipFile) {
+            Write-Error "No zip file found in target/"
             exit 1
           }
+          Rename-Item -LiteralPath $zipFile.FullName -NewName "${{ matrix.artifact }}" -ErrorAction Stop
 
       - name: Upload to Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          files: target/worship-ppt-creator-windows.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-macos-intel:
-    runs-on: macos-12
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Build macOS Intel
-        run: mvn clean package -Pmac-native -DskipTests
-
-      - name: Fix permissions
-        run: |
-          APP_DIR=$(find target -name "*.app" -type d | head -1)
-          chmod +x "$APP_DIR/Contents/MacOS/universalJavaApplicationStub" || true
-          chmod -R +x "$APP_DIR/Contents/PlugIns/jre.jre/Contents/Home/bin" || true
-
-      - name: Rename artifact
-        run: |
-          cd target
-          mv *.zip worship-ppt-creator-macos-intel.zip
-
-      - name: Upload to Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: target/worship-ppt-creator-macos-intel.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-macos-arm:
-    runs-on: macos-14
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Build macOS ARM
-        run: mvn clean package -Pmac-native -DskipTests
-
-      - name: Fix permissions
-        run: |
-          APP_DIR=$(find target -name "*.app" -type d | head -1)
-          chmod +x "$APP_DIR/Contents/MacOS/universalJavaApplicationStub" || true
-          chmod -R +x "$APP_DIR/Contents/PlugIns/jre.jre/Contents/Home/bin" || true
-
-      - name: Rename artifact
-        run: |
-          cd target
-          mv *.zip worship-ppt-creator-macos-arm64.zip
-
-      - name: Upload to Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: target/worship-ppt-creator-macos-arm64.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: target/${{ matrix.artifact }}
