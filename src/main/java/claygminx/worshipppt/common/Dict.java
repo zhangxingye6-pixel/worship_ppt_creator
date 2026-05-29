@@ -84,6 +84,7 @@ public class Dict {
         public final static String FORMAT2 = "scripture.format2";
         public final static String FORMAT3 = "scripture.format3";
         public final static String FORMAT4 = "scripture.format4";
+        public final static String FORMAT5 = "scripture.format5";
         public final static String REGEX = "scripture.regex";
 
         // 信条
