@@ -1,0 +1,18 @@
+when:
+  - event: tag
+    ref: refs/tags/v*
+
+steps:
+  build-macos-x86_64:
+    image: maven:3.9-eclipse-temurin-17
+    commands:
+      - apt-get update && apt-get install -y curl tar xz-utils
+      - curl -L -o /tmp/mac-jdk.tar.gz "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.11%2B9/OpenJDK17U-jdk_x64_mac_hotspot_17.0.11_9.tar.gz"
+      - mkdir -p /opt/mac-jdk
+      - tar xzf /tmp/mac-jdk.tar.gz -C /opt/mac-jdk --strip-components=1
+      - mvn clean package -Pmac-intel -DskipTests -Dmac.jdk.path=/opt/mac-jdk/Contents/Home
+      - |
+        ZIP_FILE=$(find target -name "*.zip" -type f | head -1)
+        if [ -n "$ZIP_FILE" ]; then
+          mv "$ZIP_FILE" target/worship-ppt-creator-macos-intel.zip
+        fi
