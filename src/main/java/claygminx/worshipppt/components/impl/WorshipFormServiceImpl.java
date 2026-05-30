@@ -416,14 +416,15 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         JTextField publicPrayTextField = addRegularTableInputRow(tableBox, ScriptureContentKey.PUBLIC_PRAY);
         scriptureContentTextFieldMap.put(ScriptureContentKey.PUBLIC_PRAY, publicPrayTextField);
 
+        JTextField readingScriptureTextField = addRegularTableInputRow(tableBox, ScriptureContentKey.READING_SCRIPTURE);
+        scriptureContentTextFieldMap.put(ScriptureContentKey.READING_SCRIPTURE, readingScriptureTextField);
+
         JTextField confessTextField = addRegularTableInputRow(tableBox, ScriptureContentKey.CONFESS);
         scriptureContentTextFieldMap.put(ScriptureContentKey.CONFESS, confessTextField);
 
         JTextField forgiveSinsTextField = addRegularTableInputRow(tableBox, ScriptureContentKey.FORGIVE_SINS);
         scriptureContentTextFieldMap.put(ScriptureContentKey.FORGIVE_SINS, forgiveSinsTextField);
 
-        JTextField readingScriptureTextField = addRegularTableInputRow(tableBox, ScriptureContentKey.READING_SCRIPTURE);
-        scriptureContentTextFieldMap.put(ScriptureContentKey.READING_SCRIPTURE, readingScriptureTextField);
 
         ScriptureContentEntity content = worshipEntity.getScriptureContent();
         if (content != null) {
