@@ -1,6 +1,7 @@
 when:
   - event: tag
     ref: refs/tags/v*
+  - event: push
   - event: manual
 
 steps:
@@ -33,8 +34,8 @@ steps:
           -H "Content-Type: application/zip" \
           --data-binary "@target/worship-ppt-creator-macos-intel.zip"
     environment:
-      - CODEBERG_TOKEN:
-          from_secret: codeberg_token
+      CODEBERG_TOKEN:
+        from_secret: codeberg_token
 
   upload-to-release:
     image: woodpeckerci/plugin-gitea-release
