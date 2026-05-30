@@ -33,10 +33,12 @@ steps:
         fi
         echo "Owner: [$OWNER]"
         echo "Version: [$VERSION]"
-        echo "Download: https://codeberg.org/$CI_REPO/packages"
-        U="https://codeberg.org/api/packages/$OWNER/generic/worship-ppt-creator/$VERSION/worship-ppt-creator-macos-intel.zip"
+        echo "Download: https://codeberg.org/$OWNER/packages"
+        FILE_NAME="worship-ppt-creator-macos-intel-$VERSION.zip"
+        cp target/worship-ppt-creator-macos-intel.zip "target/$FILE_NAME"
+        U="https://codeberg.org/api/packages/$OWNER/generic/worship-ppt-creator/$VERSION/$FILE_NAME"
         echo "Uploading to: $U"
-        curl -s --user ":$CODEBERG_TOKEN" --upload-file "target/worship-ppt-creator-macos-intel.zip" "$U" \
+        curl -s --user ":$CODEBERG_TOKEN" --upload-file "target/$FILE_NAME" "$U" \
           -w "\nHTTP_CODE:%{http_code}" -o /tmp/pkg_response.txt
         echo "Response: $(cat /tmp/pkg_response.txt)"
     environment:
