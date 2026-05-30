@@ -24,12 +24,9 @@ steps:
       - apk add --no-cache curl
       - |
         OWNER="${CI_REPO%%/*}"
-        VERSION="${CI_COMMIT_SHA:0:8}"
-        if [ -n "$CI_COMMIT_TAG" ]; then
-          VERSION="$CI_COMMIT_TAG"
-        fi
         echo "Uploading artifact to Codeberg Packages..."
         echo "Download: https://codeberg.org/${CI_REPO}/packages"
+        VERSION="${CI_COMMIT_SHA:0:8}"
         curl -s -X PUT "https://codeberg.org/api/packages/${OWNER}/generic/worship-ppt-creator/${VERSION}/worship-ppt-creator-macos-intel.zip" \
           -H "Authorization: token $CODEBERG_TOKEN" \
           -H "Content-Type: application/zip" \
@@ -40,39 +37,20 @@ steps:
       CODEBERG_TOKEN:
         from_secret: codeberg_token
 
-  upload-to-release:
+  upload-to-tag:
     image: alpine:latest
     commands:
       - apk add --no-cache curl
       - |
-        echo "Creating release for tag: $CI_COMMIT_TAG"
-        echo "Download: https://codeberg.org/${CI_REPO}/tags"
-        # Create the release
-        HTTP_CODE=$(curl -s -X POST "https://codeberg.org/api/v1/repos/${CI_REPO}/releases" \
+        OWNER="${CI_REPO%%/*}"
+        echo "Uploading artifact to Codeberg Packages (tag: $CI_COMMIT_TAG)..."
+        echo "Download: https://codeberg.org/${CI_REPO}/packages"
+        curl -s -X PUT "https://codeberg.org/api/packages/${OWNER}/generic/worship-ppt-creator/${CI_COMMIT_TAG}/worship-ppt-creator-macos-intel.zip" \
           -H "Authorization: token $CODEBERG_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d "{\"tag_name\": \"$CI_COMMIT_TAG\", \"name\": \"$CI_COMMIT_TAG\"}" \
-          -w "%{http_code}" -o /tmp/release_response.txt)
-        echo "Create release response code: $HTTP_CODE"
-        cat /tmp/release_response.txt
-        # Get release ID
-        if [ "$HTTP_CODE" = "201" ]; then
-          RELEASE_ID=$(grep -o '"id":[0-9]*' /tmp/release_response.txt | head -1 | cut -d: -f2)
-        else
-          # Release might already exist, fetch it
-          RELEASE_ID=$(curl -s "https://codeberg.org/api/v1/repos/${CI_REPO}/releases/tag/$CI_COMMIT_TAG" \
-            -H "Authorization: token $CODEBERG_TOKEN" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
-        fi
-        if [ -n "$RELEASE_ID" ]; then
-          echo "Uploading asset to release ID: $RELEASE_ID"
-          curl -s -X POST "https://codeberg.org/api/v1/repos/${CI_REPO}/releases/$RELEASE_ID/assets" \
-            -H "Authorization: token $CODEBERG_TOKEN" \
-            -F "attachment=@target/worship-ppt-creator-macos-intel.zip" \
-            -w "%{http_code}" -o /tmp/asset_response.txt
-          echo "Upload asset response code: $(cat /tmp/asset_response.txt)"
-        else
-          echo "ERROR: Could not get release ID"
-        fi
+          -H "Content-Type: application/zip" \
+          --data-binary "@target/worship-ppt-creator-macos-intel.zip" \
+          -w "%{http_code}" -o /tmp/pkg_response.txt
+        echo "Response code: $(cat /tmp/pkg_response.txt)"
     environment:
       CODEBERG_TOKEN:
         from_secret: codeberg_token
