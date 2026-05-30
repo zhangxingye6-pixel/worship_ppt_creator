@@ -23,20 +23,20 @@ steps:
     commands:
       - apk add --no-cache curl
       - |
-        OWNER=$(echo "${CI_REPO}" | cut -d/ -f1)
+        OWNER=$(echo "$CI_REPO" | cut -d/ -f1)
         if [ -n "$CI_COMMIT_TAG" ]; then
           VERSION="$CI_COMMIT_TAG"
           echo "Uploading release artifact (tag: $VERSION)..."
         else
-          VERSION=$(echo "${CI_COMMIT_SHA}" | cut -c1-8)
+          VERSION=$(echo "$CI_COMMIT_SHA" | cut -c1-8)
           echo "Uploading build artifact (commit: $VERSION)..."
         fi
-        echo "Owner: $OWNER"
-        echo "Download: https://codeberg.org/${CI_REPO}/packages"
-        echo "Uploading to: https://codeberg.org/api/packages/${OWNER}/generic/worship-ppt-creator/${VERSION}/worship-ppt-creator-macos-intel.zip"
-        curl -s --user ":$CODEBERG_TOKEN" \
-          --upload-file "target/worship-ppt-creator-macos-intel.zip" \
-          "https://codeberg.org/api/packages/${OWNER}/generic/worship-ppt-creator/${VERSION}/worship-ppt-creator-macos-intel.zip" \
+        echo "Owner: [$OWNER]"
+        echo "Version: [$VERSION]"
+        echo "Download: https://codeberg.org/$CI_REPO/packages"
+        U="https://codeberg.org/api/packages/$OWNER/generic/worship-ppt-creator/$VERSION/worship-ppt-creator-macos-intel.zip"
+        echo "Uploading to: $U"
+        curl -s --user ":$CODEBERG_TOKEN" --upload-file "target/worship-ppt-creator-macos-intel.zip" "$U" \
           -w "\nHTTP_CODE:%{http_code}" -o /tmp/pkg_response.txt
         echo "Response: $(cat /tmp/pkg_response.txt)"
     environment:
