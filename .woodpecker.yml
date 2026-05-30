@@ -33,7 +33,7 @@ steps:
         fi
         echo "Owner: [$OWNER]"
         echo "Version: [$VERSION]"
-        echo "Download: https://codeberg.org/$OWNER/packages"
+        echo "Download: https://codeberg.org/$CI_REPO/packages"
         FILE_NAME="worship-ppt-creator-macos-intel-$VERSION.zip"
         cp target/worship-ppt-creator-macos-intel.zip "target/$FILE_NAME"
         U="https://codeberg.org/api/packages/$OWNER/generic/worship-ppt-creator/$VERSION/$FILE_NAME"
