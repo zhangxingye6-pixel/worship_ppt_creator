@@ -12,6 +12,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -1105,7 +1107,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         String versionInfo = stringBuilder.append("发现新版本: ").append(githubReleaseEntity.tag_name()).append("\n")
                 .append("-").append("发布于: ").append(simpleDateFormat.format(githubReleaseEntity.created_at())).append("\n")
                 .append("-").append("下载地址: <a href='").append(githubReleaseEntity.html_url()).append("'>").append("点击前往下载win/macos_arm版本").append("</a>").append("\n")
-                .append("-").append("下载地址: <a href='https://codeberg.org/api/packages/zhangxingye6-pixel/generic/worship-ppt-creator/").append(githubReleaseEntity.tag_name()).append("/worship-ppt-creator-macos-intel-").append(SystemConfig.getString(ProjectProperty.VERSION)).append(".zip'>").append("点击前往下载macos_x86_64版本").append("</a>").append("\n").toString();
+                .append("-").append("下载地址: <a href='https://codeberg.org/zhangxingye6-pixel/-/packages/generic/worship-ppt-creator/").append(githubReleaseEntity.tag_name()).append("'>").append("点击前往下载macos_x86_64版本").append("</a>").append("\n").toString();
         // 清空
         stringBuilder.setLength(0);
         // 新版本特性
@@ -1587,6 +1589,8 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         f.setEditable(false);
         f.setBackground(null);
         f.setBorder(null);
+        StyleSheet styleSheet = ((HTMLDocument) f.getDocument()).getStyleSheet();
+        styleSheet.addRule("a { text-decoration: none; }");
         return f;
     }
 
