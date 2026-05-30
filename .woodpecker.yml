@@ -27,12 +27,12 @@ steps:
         echo "Uploading artifact to Codeberg Packages..."
         echo "Download: https://codeberg.org/${CI_REPO}/packages"
         VERSION="${CI_COMMIT_SHA:0:8}"
-        curl -s -X PUT "https://codeberg.org/api/packages/${OWNER}/generic/worship-ppt-creator/${VERSION}/worship-ppt-creator-macos-intel.zip" \
-          -H "Authorization: token $CODEBERG_TOKEN" \
-          -H "Content-Type: application/zip" \
-          --data-binary "@target/worship-ppt-creator-macos-intel.zip" \
-          -w "%{http_code}" -o /tmp/pkg_response.txt
-        echo "Response code: $(cat /tmp/pkg_response.txt)"
+        echo "Uploading to: https://codeberg.org/api/packages/${OWNER}/generic/worship-ppt-creator/${VERSION}/worship-ppt-creator-macos-intel.zip"
+        curl -s --user ":$CODEBERG_TOKEN" \
+          --upload-file "target/worship-ppt-creator-macos-intel.zip" \
+          "https://codeberg.org/api/packages/${OWNER}/generic/worship-ppt-creator/${VERSION}/worship-ppt-creator-macos-intel.zip" \
+          -w "\nHTTP_CODE:%{http_code}" -o /tmp/pkg_response.txt
+        echo "Response: $(cat /tmp/pkg_response.txt)"
     environment:
       CODEBERG_TOKEN:
         from_secret: codeberg_token
@@ -45,12 +45,11 @@ steps:
         OWNER="${CI_REPO%%/*}"
         echo "Uploading artifact to Codeberg Packages (tag: $CI_COMMIT_TAG)..."
         echo "Download: https://codeberg.org/${CI_REPO}/packages"
-        curl -s -X PUT "https://codeberg.org/api/packages/${OWNER}/generic/worship-ppt-creator/${CI_COMMIT_TAG}/worship-ppt-creator-macos-intel.zip" \
-          -H "Authorization: token $CODEBERG_TOKEN" \
-          -H "Content-Type: application/zip" \
-          --data-binary "@target/worship-ppt-creator-macos-intel.zip" \
-          -w "%{http_code}" -o /tmp/pkg_response.txt
-        echo "Response code: $(cat /tmp/pkg_response.txt)"
+        curl -s --user ":$CODEBERG_TOKEN" \
+          --upload-file "target/worship-ppt-creator-macos-intel.zip" \
+          "https://codeberg.org/api/packages/${OWNER}/generic/worship-ppt-creator/${CI_COMMIT_TAG}/worship-ppt-creator-macos-intel.zip" \
+          -w "\nHTTP_CODE:%{http_code}" -o /tmp/pkg_response.txt
+        echo "Response: $(cat /tmp/pkg_response.txt)"
     environment:
       CODEBERG_TOKEN:
         from_secret: codeberg_token
