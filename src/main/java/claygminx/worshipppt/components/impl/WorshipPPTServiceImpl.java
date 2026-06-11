@@ -40,7 +40,7 @@ public class WorshipPPTServiceImpl implements WorshipPPTService {
     }
 
     @Override
-    public void make() throws FileServiceException, WorshipStepException, PPTLayoutException, PoetrySourcesNotExistException {
+    public void make() throws FileServiceException, WorshipStepException, PPTLayoutException, PoetrySourcesNotExistException, ScriptureNumberException {
         // 1.准备PPT文件
         try {
             fileService.copyTemplate(file);
@@ -87,6 +87,8 @@ public class WorshipPPTServiceImpl implements WorshipPPTService {
             throw new PPTLayoutException(e.getMessage(), e);
         } catch (PoetrySourcesNotExistException e) {
             throw new PoetrySourcesNotExistException(e.getMessage(), e);
+        } catch (ScriptureNumberException e) {
+            throw new ScriptureNumberException(e.getMessage());
         } catch (Exception e) {
             throw new SystemException("出现未知错误！", e);
         }

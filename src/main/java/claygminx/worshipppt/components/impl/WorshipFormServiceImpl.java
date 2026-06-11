@@ -19,6 +19,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -643,7 +644,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
                                     "<li>还有更多需要细心检查的细节</li></ol></html>";
                             JTextPane f = createTextPane(message);
                             JOptionPane.showMessageDialog(frame, f, "提示", JOptionPane.INFORMATION_MESSAGE);
-                        } catch (FileServiceException | WorshipStepException | PPTLayoutException | SystemException e) {
+                        } catch (FileServiceException | WorshipStepException | PPTLayoutException | SystemException | ScriptureNumberException e) {
                             pm.close();
                             logger.error("制作PPT时出现错误！", e);
                             JOptionPane.showMessageDialog(frame, e.getMessage(), "提示", JOptionPane.ERROR_MESSAGE);
@@ -1199,79 +1200,72 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             @Override
             public boolean importData(JComponent comp, Transferable t) {
                 DataFlavor[] flavors = t.getTransferDataFlavors();
-                for (int i = 0; i < flavors.length; i++) {
-                    DataFlavor flavor = flavors[i];
+
+                // 优先尝试 javaFileListFlavor（返回 List<File>）
+                for (DataFlavor flavor : flavors) {
                     if (DataFlavor.javaFileListFlavor.equals(flavor)) {
                         try {
                             Object o = t.getTransferData(DataFlavor.javaFileListFlavor);
-                            String filePath = o.toString();
-                            logger.debug(filePath);
+                            if (o instanceof List<?>) {
+                                List<?> fileList = (List<?>) o;
+                                if (!fileList.isEmpty() && fileList.get(0) instanceof File) {
+                                    File file = (File) fileList.get(0);
+                                    String filePath = file.getAbsolutePath();
+                                    logger.debug(filePath);
 
-                            if (filePath.startsWith("[")) {
-                                filePath = filePath.substring(1);
-                            }
-                            if (filePath.endsWith("]")) {
-                                filePath = filePath.substring(0, filePath.length() - 1);
-                            }
-                            logger.debug(filePath);
+                                    // 提取路径中的曲名
+                                    String[] split = filePath.split(Pattern.quote(File.separator));
+                                    String formatPoetryName = "";
+                                    for (String s : split) {
+                                        if (s.contains("-")) {
+                                            List<Character> charList = s.chars().mapToObj(c -> (char) c).collect(Collectors.toList());
+                                            List<Integer> hyphenIndex = new ArrayList<>();
+                                            for (int j = 0; j < charList.size(); j++) {
+                                                Character c = charList.get(j);
+                                                if (c.charValue() == '-'){
+                                                    hyphenIndex.add(j);
+                                                }
+                                            }
+                                            logger.info("poetryName = " + s);
+                                            int firstHyphen = hyphenIndex.get(0);
+                                            int lastHyphen = hyphenIndex.get(hyphenIndex.size() - 1);
+                                            String poetryName = s.substring(firstHyphen + 1, lastHyphen);
+                                            String poetryKey = s.substring(lastHyphen + 1);
 
-                            /**
-                             * 提取路径中的曲名，注意跨平台的兼容性
-                             * 目前诗歌名称为"编号-曲名-调式"， 例如112-我要向高山举目-bB
-                             */
-                            String[] split = filePath.split(Pattern.quote(File.separator));
-                            String formatPoetryName = "";
-                            for (String s : split) {
-                                if (s.contains("-")) {
-                                    // 需要注意的是曲名中本来就带有'-'的， 比如16-He-Ne-Ni-A，所以要再加一个校验
-                                    // 除了获取第一个和最后一个'-'以外，好像没什么办法捏~
-                                    List<Character> charList = s.chars().mapToObj(c -> (char) c).collect(Collectors.toList());
-                                    List<Integer> hyphenIndex = new ArrayList<>();
-                                    for (int j = 0; j < charList.size(); j++) {
-                                        Character c = charList.get(j);
-                                        if (c.charValue() == '-'){
-                                            hyphenIndex.add(j);
+                                            StringBuilder stringBuilder = new StringBuilder();
+                                            stringBuilder.append(poetryKey)
+                                                    .append("调")
+                                                    .append("《")
+                                                    .append(poetryName)
+                                                    .append("》");
+                                            formatPoetryName = stringBuilder.toString();
+                                            break;
                                         }
                                     }
-                                    // 曲名就是第一个短线和最后一个短线之间的部分，调式就是最后一个短线之后的部分
-                                    logger.info("poetryName = " + s);
-                                    int firstHyphen = hyphenIndex.get(0);
-                                    int lastHyphen = hyphenIndex.get(hyphenIndex.size() - 1);
-                                    String poetryName = s.substring(firstHyphen + 1, lastHyphen);
-                                    String poetryKey = s.substring(lastHyphen + 1);
-
-                                    StringBuilder stringBuilder = new StringBuilder();
-                                    stringBuilder.append(poetryKey)
-                                            .append("调")
-                                            .append("《")
-                                            .append(poetryName)
-                                            .append("》");
-                                    formatPoetryName = stringBuilder.toString();
-                                    break;
+                                    logger.debug("formatPoetryName = " + formatPoetryName);
+                                    poetryNameTextField.setText(formatPoetryName);
+                                    poetryDirectoryTextField.setText(filePath);
+                                    return false;
                                 }
                             }
-                            logger.debug("formatPoetryName = " + formatPoetryName);
-                            // 填充曲名和路径
-                            poetryNameTextField.setText(formatPoetryName);
-                            poetryDirectoryTextField.setText(filePath);
-                            // 当曲名栏有非空的字符时，再次拖拽是不会修改内容的，某些情况下未免不太方便，目前移除这一段代码
-//                            if (poetryNameTextField.getText() == null || poetryNameTextField.getText().trim().isEmpty()) {
-//                                poetryNameTextField.setText(fileName);
-//                            }
                         } catch (Exception e) {
-                            logger.error("拖拽失败！", e);
-                            JOptionPane.showMessageDialog(
-                                    frame,
-                                    "拖拽文件失败，无法显示文件路径！",
-                                    "错误提示",
-                                    JOptionPane.ERROR_MESSAGE
-                            );
+                            logger.error("javaFileListFlavor 拖拽失败，尝试其他方式", e);
                         }
-                        return false;
-                    } else if (DataFlavor.stringFlavor.equals(flavor)) {
+                        break;
+                    }
+                }
+
+                // 回落尝试 stringFlavor（兼容 macOS 的 file:// URL）
+                for (DataFlavor flavor : flavors) {
+                    if (DataFlavor.stringFlavor.equals(flavor)) {
                         try {
-                            Object o = t.getTransferData(DataFlavor.stringFlavor);
-                            poetryDirectoryTextField.setText(o.toString());
+                            String text = (String) t.getTransferData(DataFlavor.stringFlavor);
+                            if (text.startsWith("file://")) {
+                                text = new URI(text).getPath();
+                            } else if (text.startsWith("file:/")) {
+                                text = text.substring(5);
+                            }
+                            poetryDirectoryTextField.setText(text);
                         } catch (Exception e) {
                             logger.error("操作失败！", e);
                             JOptionPane.showMessageDialog(frame, "操作失败！", "错误提示", JOptionPane.ERROR_MESSAGE);
@@ -1286,7 +1280,9 @@ public class WorshipFormServiceImpl implements WorshipFormService {
 
             @Override
             public boolean canImport(JComponent comp, DataFlavor[] flavors) {
-                return Arrays.stream(flavors).anyMatch(DataFlavor.javaFileListFlavor::equals);
+                return Arrays.stream(flavors).anyMatch(
+                        f -> DataFlavor.javaFileListFlavor.equals(f) || DataFlavor.stringFlavor.equals(f)
+                );
             }
         });
 

@@ -47,12 +47,16 @@ public class DeclarationContentStep extends AbstractWorshipStep {
         switch (DeclarationTitleStep.DECLARATION_METHOD_NAME) {
             case "西敏信条" -> {
                 // 解析西敏信条章节参数，获取信条节实体列表， 获取格式化的列表
-                List<ConfessionVerseEntity> confessionVerseEntities = validateConfessionNumber(declarationEntity.getTitle());
                 List<String> formatConfessionContent = null;
+                List<ConfessionVerseEntity> confessionVerseEntities = null;
                 try {
+                    confessionVerseEntities = validateConfessionNumber(declarationEntity.getTitle());
+
                     formatConfessionContent = confessionService.getFormatConfessionContent(confessionVerseEntities, Dict.ScriptureProperty.CONFESSION_FORMART1);
                 } catch (IOException | TemplateException e) {
                     throw new ConfessionServiceException("宣信：内容格式化失败");
+                } catch (ScriptureNumberException e) {
+                    throw new ScriptureNumberException(e.getMessage());
                 }
 
 

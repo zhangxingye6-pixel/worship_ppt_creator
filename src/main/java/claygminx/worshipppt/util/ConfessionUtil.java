@@ -31,7 +31,7 @@ public class ConfessionUtil {
      * @throws ScriptureNumberException 若给定参数不符合经文编号格式，抛出此异常
      */
     public static List<ConfessionQueryRequestEntity> parseChapterNumber(String chapterNumber) throws ScriptureNumberException {
-        logger.debug("开始解析西敏信条章节");
+        logger.info("开始解析西敏信条章节");
         // 章节的第一分隔符是逗号
         String[] splitResult = chapterNumber.split(",");
         logger.debug("逗号分割后有{}个部分", splitResult.length);

@@ -24,7 +24,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-
+/**
+ *
+ */
 public class ConfessionServiceImpl implements ConfessionService {
     private final static Logger logger = LoggerFactory.getLogger(ConfessionServiceImpl.class);
 
@@ -46,7 +48,7 @@ public class ConfessionServiceImpl implements ConfessionService {
     private static ConfessionService confessionService;
 
     /**
-     * 禁止外部私有化
+     * 禁止外部实例化
      */
     private ConfessionServiceImpl() {
 
