@@ -18,7 +18,7 @@ jobs:
             profile: windows
             artifact: worship-ppt-creator-windows.zip
 
-          - os: macos-13
+          - os: macos-15-intel
             profile: mac-native
             artifact: worship-ppt-creator-macos-intel.zip
 
