@@ -1107,8 +1107,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         // 版本信息
         String versionInfo = stringBuilder.append("发现新版本: ").append(githubReleaseEntity.tag_name()).append("\n")
                 .append("-").append("发布于: ").append(simpleDateFormat.format(githubReleaseEntity.created_at())).append("\n")
-                .append("-").append("下载地址: <a href='").append(githubReleaseEntity.html_url()).append("'>").append("点击前往下载win/macos_arm版本").append("</a>").append("\n")
-                .append("-").append("下载地址: <a href='https://codeberg.org/zhangxingye6-pixel/-/packages/generic/worship-ppt-creator/").append(githubReleaseEntity.tag_name()).append("'>").append("点击前往下载macos_x86_64版本").append("</a>").append("\n").toString();
+                .append("-").append("下载地址: <a href='").append(githubReleaseEntity.html_url()).append("'>").append("点击前往下载Windows/macOS Intel/macOS ARM版本").append("</a>").append("\n").toString();
         // 清空
         stringBuilder.setLength(0);
         // 新版本特性
