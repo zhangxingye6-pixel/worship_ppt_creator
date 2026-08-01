@@ -72,35 +72,10 @@ public class SummonStep extends AbstractWorshipStep {
         // 制表符
         XSLFTextRun beforeScriptureTextRun = paragraph.addNewTextRun();
         beforeScriptureTextRun.setText("主领:" + " ");
-
         // 经文
         XSLFTextRun scriptureTextRun = paragraph.addNewTextRun();
         scriptureTextRun.setText(scriptureEntity.getScripture());
         TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
-
-
-        // 用换行符分段
-//        String[] scriptures = scriptureEntity.getScripture().split("\r\n");
-
-        // 循环写入经文
-//
-//            for (int i = 0; i < scriptures.length; i++) {
-//
-//                // 经文
-//                XSLFTextRun scriptureTextRun = paragraph.addNewTextRun();
-//                scriptureTextRun.setText(scriptures[i]);
-//                // 字号颜色
-//                scriptureTextRun.setFontSize(scriptureFontSize);
-//                if (i % 2 == 0) {
-//                    // 奇数段经文 用主领的黑色
-//                    TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
-//
-//                } else {
-//                    // 偶数段经文 用会众的蓝色
-//                    TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
-//                }
-//            }
-
 
         // 第二段
         paragraph = placeholder.addNewTextParagraph();

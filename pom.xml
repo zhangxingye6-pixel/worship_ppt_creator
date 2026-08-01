@@ -6,13 +6,14 @@
 
     <groupId>lazarus</groupId>
     <artifactId>worship-ppt-auto-creator</artifactId>
-    <version>v1.6.10</version>
+    <version>${revision}</version>
 
     <name>Worship PPT Auto Creator</name>
     <description>制作敬拜PPT的小工具</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <revision>v0.0.0-dev</revision>
         <java.version>17</java.version>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
         <built-by>Lazarus</built-by>
