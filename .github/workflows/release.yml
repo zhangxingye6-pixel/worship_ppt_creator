@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   build:
+    if: ${{ github.ref_type == 'tag' && startsWith(github.ref_name, 'v') }}
     strategy:
       matrix:
         include:
@@ -28,6 +29,25 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+      - name: Validate release tag
+        id: tag
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag -match '^v\d+\.\d+\.\d+$') {
+            "is_final=true" >> $env:GITHUB_OUTPUT
+            "is_rc=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          if ($tag -match '^v\d+\.\d+\.\d+-rc\.\d+$') {
+            "is_final=false" >> $env:GITHUB_OUTPUT
+            "is_rc=true" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+
+          Write-Error "Release tags must look like v1.2.3 or v1.2.3-rc.1. Got: $tag"
+          exit 1
+
       - uses: actions/checkout@v4
 
       - name: Setup Java
@@ -58,7 +78,15 @@ jobs:
           }
           Rename-Item -LiteralPath $zipFile.FullName -NewName "${{ matrix.artifact }}" -ErrorAction Stop
 
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.ref_name }}-${{ matrix.artifact }}
+          path: target/${{ matrix.artifact }}
+          retention-days: 14
+
       - name: Upload to Release
+        if: steps.tag.outputs.is_final == 'true'
         uses: softprops/action-gh-release@v2
         with:
           files: target/${{ matrix.artifact }}

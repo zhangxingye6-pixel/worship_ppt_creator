@@ -23,14 +23,18 @@ steps:
     commands:
       - apk add --no-cache curl
       - |
-        OWNER=$(echo "$CI_REPO" | cut -d/ -f1)
-        if [ -n "$CI_COMMIT_TAG" ]; then
-          VERSION="$CI_COMMIT_TAG"
-          echo "Uploading release artifact (tag: $VERSION)..."
-        else
-          VERSION=$(echo "$CI_COMMIT_SHA" | cut -c1-8)
-          echo "Uploading build artifact (commit: $VERSION)..."
+        if [ -z "$CI_COMMIT_TAG" ]; then
+          echo "Skipping package upload: this is not a tag build."
+          exit 0
         fi
+        if ! echo "$CI_COMMIT_TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+          echo "Skipping package upload: $CI_COMMIT_TAG is not a final release tag."
+          exit 0
+        fi
+
+        OWNER=$(echo "$CI_REPO" | cut -d/ -f1)
+        VERSION="$CI_COMMIT_TAG"
+        echo "Uploading release artifact (tag: $VERSION)..."
         echo "Owner: [$OWNER]"
         echo "Version: [$VERSION]"
         echo "Download: https://codeberg.org/$CI_REPO/packages"
@@ -38,7 +42,7 @@ steps:
         cp target/worship-ppt-creator-macos-intel.zip "target/$FILE_NAME"
         U="https://codeberg.org/api/packages/$OWNER/generic/worship-ppt-creator/$VERSION/$FILE_NAME"
         echo "Uploading to: $U"
-        curl -s --user ":$CODEBERG_TOKEN" --upload-file "target/$FILE_NAME" "$U" \
+        curl --fail-with-body -s --user ":$CODEBERG_TOKEN" --upload-file "target/$FILE_NAME" "$U" \
           -w "\nHTTP_CODE:%{http_code}" -o /tmp/pkg_response.txt
         echo "Response: $(cat /tmp/pkg_response.txt)"
     environment:
