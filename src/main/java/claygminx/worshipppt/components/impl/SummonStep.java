@@ -47,7 +47,7 @@ public class SummonStep extends AbstractWorshipStep {
 
         // 从配置获取需按照的形式
         ScriptureEntity scriptureEntity = scriptureService.getScriptureWithFormat(
-                scriptureNumberEntity, SystemConfig.getString(Dict.ScriptureProperty.FORMAT5));
+                scriptureNumberEntity, SystemConfig.getString(Dict.ScriptureProperty.FORMAT1));
 
         XMLSlideShow ppt = getPpt();
         XSLFSlideLayout layout = ppt.findLayout(getLayout());
@@ -70,42 +70,51 @@ public class SummonStep extends AbstractWorshipStep {
         XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
         useCustomLanguage(paragraph);
         // 制表符
-//        XSLFTextRun scriptureTextRun = paragraph.addNewTextRun();
-//        scriptureTextRun.setText("\t");
+        XSLFTextRun beforeScriptureTextRun = paragraph.addNewTextRun();
+        beforeScriptureTextRun.setText("主领:" + " ");
+
+        // 经文
+        XSLFTextRun scriptureTextRun = paragraph.addNewTextRun();
+        scriptureTextRun.setText(scriptureEntity.getScripture());
+        TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
+
+
         // 用换行符分段
-        String[] scriptures = scriptureEntity.getScripture().split("\r\n");
+//        String[] scriptures = scriptureEntity.getScripture().split("\r\n");
 
         // 循环写入经文
-
-        for (int i = 0; i < scriptures.length; i++) {
-
-            // 经文
-            XSLFTextRun scriptureTextRun = paragraph.addNewTextRun();
-            scriptureTextRun.setText(scriptures[i]);
-            // 字号颜色
-            scriptureTextRun.setFontSize(scriptureFontSize);
-            if (i % 2 == 0) {
-                // 奇数段经文 用主领的黑色
-                TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
-
-            } else {
-                // 偶数段经文 用会众的蓝色
-                TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
-            }
-        }
+//
+//            for (int i = 0; i < scriptures.length; i++) {
+//
+//                // 经文
+//                XSLFTextRun scriptureTextRun = paragraph.addNewTextRun();
+//                scriptureTextRun.setText(scriptures[i]);
+//                // 字号颜色
+//                scriptureTextRun.setFontSize(scriptureFontSize);
+//                if (i % 2 == 0) {
+//                    // 奇数段经文 用主领的黑色
+//                    TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
+//
+//                } else {
+//                    // 偶数段经文 用会众的蓝色
+//                    TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
+//                }
+//            }
 
 
         // 第二段
-//        paragraph = placeholder.addNewTextParagraph();
-//        scriptureTextRun = paragraph.addNewTextRun();
-//        scriptureTextRun.setText("\t");
+        paragraph = placeholder.addNewTextParagraph();
+        paragraph.addNewTextRun().setText("\n");
+        scriptureTextRun = paragraph.addNewTextRun();
+        scriptureTextRun.setText("回应:" + " ");
+        TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
         // 回应 目前的宣召是启应形式
-//        scriptureTextRun = paragraph.addNewTextRun();
-//        scriptureTextRun.setText("我们当赞美耶和华！");
-//        scriptureTextRun.setBold(true);
-//        scriptureTextRun.setUnderlined(true);
-//        scriptureTextRun.setFontSize(scriptureFontSize);
-//        TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
+        scriptureTextRun = paragraph.addNewTextRun();
+        scriptureTextRun.setText("我们要赞美耶和华！");
+        scriptureTextRun.setBold(true);
+        scriptureTextRun.setUnderlined(true);
+        scriptureTextRun.setFontSize(scriptureFontSize);
+        TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
 
         logger.info("宣召幻灯片制作完成");
     }
