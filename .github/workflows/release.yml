@@ -57,7 +57,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Build
-        run: mvn clean package -P${{ matrix.profile }} -DskipTests -Drevision=${{ github.ref_name }}
+        run: mvn clean package -P${{ matrix.profile }} -DskipTests "-Drevision=${{ github.ref_name }}"
 
       - name: Fix macOS permissions
         if: runner.os == 'macOS'
