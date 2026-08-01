@@ -11,7 +11,7 @@ steps:
       - curl -L -o /tmp/mac-jdk.tar.gz "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.11%2B9/OpenJDK17U-jdk_x64_mac_hotspot_17.0.11_9.tar.gz"
       - mkdir -p /opt/mac-jdk
       - tar xzf /tmp/mac-jdk.tar.gz -C /opt/mac-jdk --strip-components=1
-      - mvn clean package -Pmac-intel -DskipTests -Dmac.jdk.path=/opt/mac-jdk/Contents/Home
+      - mvn clean package -Pmac-intel -DskipTests -Dmac.jdk.path=/opt/mac-jdk/Contents/Home -Drevision=${CI_COMMIT_TAG:-v0.0.0-dev}
       - |
         ZIP_FILE=$(find target -name "*.zip" -type f | head -1)
         if [ -n "$ZIP_FILE" ]; then

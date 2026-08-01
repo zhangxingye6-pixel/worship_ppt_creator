@@ -149,6 +149,10 @@ public class UpgradeServiceImpl implements UpgradeService {
         if ("v".equalsIgnoreCase(version.substring(0, 1))) {
             version = version.substring(1);
         }
+        int suffixIndex = version.indexOf("-");
+        if (suffixIndex >= 0) {
+            version = version.substring(0, suffixIndex);
+        }
         String[] versionPartArray = version.split("[.]");
         for (int i = 0; i < versionPartArray.length; i++) {
             int n = Integer.parseInt(versionPartArray[i]);
