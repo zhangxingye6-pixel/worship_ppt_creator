@@ -74,8 +74,7 @@
         <worship-step name="小要理问答91问" layout="圣餐-小要理问答91问" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="圣餐经文1" layout="圣餐-经文1" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="圣餐经文2" layout="圣餐-经文2" class="claygminx.worshipppt.components.impl.FixedStep"/>
-        <worship-step name="圣餐经文3" layout="圣餐-经文3" class="claygminx.worshipppt.components.impl.FixedStep"/>
-        <worship-step name="圣餐诗歌标题" layout="圣餐-诗歌标题" class="claygminx.worshipppt.components.impl.HolyCommunionPoetryTitleStep" data="poetryContent.holyCommunionPoetryAlbum.poetryList"/>
+<!--        <worship-step name="圣餐经文3" layout="圣餐-经文3" class="claygminx.worshipppt.components.impl.FixedStep"/>-->
         <worship-step name="圣餐诗歌" layout="圣餐-诗歌" class="claygminx.worshipppt.components.impl.HolyCommunionPoetryStep" data="poetryContent.holyCommunionPoetryAlbum.poetryList"/>
         <worship-step name="圣餐举饼祝谢" layout="圣餐-举饼祝谢" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="圣餐举杯祝谢" layout="圣餐-举杯祝谢" class="claygminx.worshipppt.components.impl.FixedStep"/>
@@ -129,7 +128,6 @@
         <worship-step name="小要理问答91问" layout="圣餐-小要理问答91问" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="圣餐经文1" layout="圣餐-经文1" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="圣餐经文2" layout="圣餐-经文2" class="claygminx.worshipppt.components.impl.FixedStep"/>
-        <worship-step name="圣餐诗歌标题" layout="圣餐-诗歌标题" class="claygminx.worshipppt.components.impl.HolyCommunionPoetryTitleStep" data="poetryContent.holyCommunionPoetryAlbum.poetryList"/>
         <worship-step name="圣餐诗歌" layout="圣餐-诗歌" class="claygminx.worshipppt.components.impl.HolyCommunionPoetryStep" data="poetryContent.holyCommunionPoetryAlbum.poetryList"/>
         <worship-step name="圣餐举饼祝谢" layout="圣餐-举饼祝谢" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="圣餐举饼祝谢" layout="圣餐-举饼祝谢" class="claygminx.worshipppt.components.impl.FixedStep"/>

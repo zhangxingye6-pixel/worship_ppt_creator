@@ -98,7 +98,7 @@ public class RegularPoetryStep extends AbstractWorshipStep {
         logger.info("诗歌幻灯片制作完成");
     }
 
-    private void renderPoetry(PoetryEntity poetry) throws WorshipStepException, PPTLayoutException, PoetrySourcesNotExistException {
+    protected void renderPoetry(PoetryEntity poetry) throws WorshipStepException, PPTLayoutException, PoetrySourcesNotExistException {
         File directory = poetry.getDirectory();
         try {
             checkDirectory(directory);

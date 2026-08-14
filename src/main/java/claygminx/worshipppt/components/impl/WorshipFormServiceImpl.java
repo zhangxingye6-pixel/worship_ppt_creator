@@ -27,8 +27,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static claygminx.worshipppt.common.Dict.*;
 
@@ -1193,73 +1191,44 @@ public class WorshipFormServiceImpl implements WorshipFormService {
 //        poetryNameTextField.setToolTipText("建议带上书名号《》");
 
         // 歌谱图的路径
-        /**
-         * 当前macos_amd64架构，完全在回落中处理。主方法失败后不抛出异常
-         */
         JTextField poetryDirectoryTextField = addTableInputTextCell(rowBox, POETRY_TABLE_COLUMN_WIDTH_2);
         poetryDirectoryTextField.setToolTipText("该路径文件夹必须只包含此诗歌的歌谱图，歌谱图是用JP-WORD制作的，支持拖拽文件夹");
         poetryDirectoryTextField.setTransferHandler(new TransferHandler() {
             @Override
             public boolean importData(JComponent comp, Transferable t) {
-                DataFlavor[] flavors = t.getTransferDataFlavors();
-
-                // 优先尝试 javaFileListFlavor（返回 List<File>）
-                for (DataFlavor flavor : flavors) {
-                    if (DataFlavor.javaFileListFlavor.equals(flavor)) {
-                        try {
-                            Object o = t.getTransferData(DataFlavor.javaFileListFlavor);
-                            if (o instanceof List<?>) {
-                                List<?> fileList = (List<?>) o;
-                                if (!fileList.isEmpty() && fileList.get(0) instanceof File) {
-                                    File file = (File) fileList.get(0);
-                                    String filePath = file.getAbsolutePath();
-                                    logger.debug(filePath);
-
-                                    String formatPoetryName = parsePoetryNameFromPath(filePath);
-                                    logger.debug("formatPoetryName = " + formatPoetryName);
-                                    poetryNameTextField.setText(formatPoetryName);
-                                    poetryDirectoryTextField.setText(filePath);
-                                    return false;
-                                }
-                            }
-                        } catch (Exception e) {
-                            logger.error("javaFileListFlavor 拖拽失败，尝试其他方式", e);
-                        }
-                        break;
-                    }
-                }
-
-                // 回落尝试 stringFlavor（兼容 macOS 的 file:// URL 和纯目录名）
-                for (DataFlavor flavor : flavors) {
-                    if (DataFlavor.stringFlavor.equals(flavor)) {
-                        try {
-                            String text = (String) t.getTransferData(DataFlavor.stringFlavor);
-                            if (text.startsWith("file://")) {
-                                text = new URI(text).getPath();
-                            } else if (text.startsWith("file:/")) {
-                                text = text.substring(5);
-                            }
-                            String formatPoetryName = parsePoetryNameFromPath(text);
-                            logger.debug("formatPoetryName = " + formatPoetryName);
-                            poetryNameTextField.setText(formatPoetryName);
-                            poetryDirectoryTextField.setText(text);
-                        } catch (Exception e) {
-                            logger.error("操作失败！", e);
-                            JOptionPane.showMessageDialog(frame, "操作失败！", "错误提示", JOptionPane.ERROR_MESSAGE);
-                        }
+                try {
+                    File directory = getDroppedPoetryDirectory(t);
+                    if (directory == null || !directory.isDirectory()) {
+                        JOptionPane.showMessageDialog(frame, "请拖入一个有效的诗歌目录！", "错误提示", JOptionPane.ERROR_MESSAGE);
                         return false;
                     }
-                }
 
-                JOptionPane.showMessageDialog(frame, "不支持的操作！", "错误提示", JOptionPane.ERROR_MESSAGE);
-                return false;
+                    String filePath = directory.getCanonicalPath();
+                    String formatPoetryName = parsePoetryNameFromPath(filePath);
+                    if (formatPoetryName.isEmpty()) {
+                        JOptionPane.showMessageDialog(
+                                frame,
+                                "目录名格式应为“序号-曲名-调式”，例如“001-奇异恩典-C”。",
+                                "错误提示",
+                                JOptionPane.ERROR_MESSAGE
+                        );
+                        return false;
+                    }
+
+                    logger.debug("poetryDirectory = {}, formatPoetryName = {}", filePath, formatPoetryName);
+                    poetryNameTextField.setText(formatPoetryName);
+                    poetryDirectoryTextField.setText(filePath);
+                    return true;
+                } catch (Exception e) {
+                    logger.error("诗歌目录拖拽失败！", e);
+                    JOptionPane.showMessageDialog(frame, "无法读取拖入的诗歌目录！", "错误提示", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
             }
 
             @Override
             public boolean canImport(JComponent comp, DataFlavor[] flavors) {
-                return Arrays.stream(flavors).anyMatch(
-                        f -> DataFlavor.javaFileListFlavor.equals(f) || DataFlavor.stringFlavor.equals(f)
-                );
+                return Arrays.stream(flavors).anyMatch(WorshipFormServiceImpl.this::isPoetryDirectoryFlavor);
             }
         });
 
@@ -1647,37 +1616,82 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         threadPool.execute(() -> SwingUtilities.invokeLater(runnable));
     }
 
-    /**
-     * 从路径或目录名中提取诗歌名称，格式为 "调式《曲名》"
-     */
-    private String parsePoetryNameFromPath(String filePath) {
-        String[] split = filePath.split(Pattern.quote(File.separator));
-        for (String s : split) {
-            if (s.contains("-")) {
-                List<Character> charList = s.chars().mapToObj(c -> (char) c).collect(Collectors.toList());
-                List<Integer> hyphenIndex = new ArrayList<>();
-                for (int j = 0; j < charList.size(); j++) {
-                    Character c = charList.get(j);
-                    if (c.charValue() == '-'){
-                        hyphenIndex.add(j);
+    private boolean isPoetryDirectoryFlavor(DataFlavor flavor) {
+        return DataFlavor.javaFileListFlavor.equals(flavor) || flavor.isFlavorTextType();
+    }
+
+    private File getDroppedPoetryDirectory(Transferable transferable) throws Exception {
+        if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+            try {
+                Object data = transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                if (data instanceof List<?>) {
+                    List<?> files = (List<?>) data;
+                    for (Object item : files) {
+                        if (item instanceof File && ((File) item).isDirectory()) {
+                            return (File) item;
+                        }
                     }
                 }
-                logger.info("poetryName = " + s);
-                int firstHyphen = hyphenIndex.get(0);
-                int lastHyphen = hyphenIndex.get(hyphenIndex.size() - 1);
-                String poetryName = s.substring(firstHyphen + 1, lastHyphen);
-                String poetryKey = s.substring(lastHyphen + 1);
-
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(poetryKey)
-                        .append("调")
-                        .append("《")
-                        .append(poetryName)
-                        .append("》");
-                return stringBuilder.toString();
+            } catch (Exception e) {
+                logger.warn("无法通过文件列表读取拖拽目录，尝试文本格式", e);
             }
         }
-        return "";
+
+        for (DataFlavor flavor : transferable.getTransferDataFlavors()) {
+            if (!flavor.isFlavorTextType()) {
+                continue;
+            }
+            try (Reader reader = flavor.getReaderForText(transferable);
+                 BufferedReader bufferedReader = new BufferedReader(reader)) {
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    String candidate = line.trim();
+                    if (candidate.isEmpty() || candidate.startsWith("#")) {
+                        continue;
+                    }
+                    File directory = null;
+                    if (candidate.regionMatches(true, 0, "file:", 0, 5)) {
+                        URI uri = new URI(candidate);
+                        if ("file".equalsIgnoreCase(uri.getScheme()) && uri.getPath() != null) {
+                            directory = new File(uri.getPath());
+                        }
+                    } else {
+                        directory = new File(candidate);
+                    }
+                    if (directory != null && directory.isDirectory()) {
+                        return directory;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("无法通过拖拽文本格式 {} 读取目录", flavor.getMimeType(), e);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 从目录名中提取诗歌名称，格式为 "调式《曲名》"
+     */
+    private String parsePoetryNameFromPath(String filePath) {
+        if (filePath == null || filePath.trim().isEmpty()) {
+            return "";
+        }
+
+        String directoryName = new File(filePath.trim()).getName();
+        int firstHyphen = directoryName.indexOf('-');
+        int lastHyphen = directoryName.lastIndexOf('-');
+        if (firstHyphen < 0 || lastHyphen <= firstHyphen + 1 || lastHyphen >= directoryName.length() - 1) {
+            return "";
+        }
+
+        String poetryName = directoryName.substring(firstHyphen + 1, lastHyphen).trim();
+        String poetryKey = directoryName.substring(lastHyphen + 1).trim();
+        if (poetryName.isEmpty() || poetryKey.isEmpty()) {
+            return "";
+        }
+
+        logger.info("poetryDirectoryName = {}", directoryName);
+        return poetryKey + "调《" + poetryName + "》";
     }
 
     /**
