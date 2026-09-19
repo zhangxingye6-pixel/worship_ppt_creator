@@ -12,8 +12,8 @@ import claygminx.worshipppt.util.TextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.poi.xslf.usermodel.*;
-import org.w3c.dom.Text;
 
+import java.awt.geom.Rectangle2D;
 import java.util.List;
 
 /**
@@ -98,6 +98,71 @@ public class ForgiveSinsScriptureStep extends AbstractWorshipStep {
                 }
             }
         }
+        // 正文占位符的高度会随经文内容变化，下面的两个独立文本框需要作为整体同步下移。
+        moveForgivenessFooter(slide, placeholder);
         logger.info("认罪经文幻灯片制作完成");
+    }
+
+    /**
+     * 根据赦罪经文的实际渲染高度移动“会众”和底部提示文本框。
+     *
+     * <p>PowerPoint 不会自动让独立文本框跟随占位符变化，因此这里保留模板中
+     * 原有的间距和两个文本框之间的相对位置，只调整整个底部文本框组的 Y 坐标。</p>
+     *
+     * @param slide       当前赦罪幻灯片
+     * @param placeholder 已填充经文的正文占位符
+     */
+    private void moveForgivenessFooter(XSLFSlide slide, XSLFTextShape placeholder) {
+        XSLFTextShape congregationShape = null;
+        XSLFTextShape reminderShape = null;
+        double footerTop = Double.MAX_VALUE;
+
+        for (XSLFShape shape : slide.getShapes()) {
+            if (!(shape instanceof XSLFTextShape textShape) || textShape == placeholder) {
+                continue;
+            }
+            String text = textShape.getText();
+            if (text == null) {
+                continue;
+            }
+            if (text.contains("会众：")) {
+                congregationShape = textShape;
+            } else if (text.contains("感谢主赦免我们的罪")) {
+                reminderShape = textShape;
+            }
+            if (text.contains("会众：") || text.contains("感谢主赦免我们的罪")) {
+                footerTop = Math.min(footerTop, textShape.getAnchor().getY());
+            }
+        }
+
+        if (congregationShape == null || reminderShape == null || footerTop == Double.MAX_VALUE) {
+            logger.warn("赦罪版式缺少“会众：”或底部提示文本框，跳过底部文本框位置调整");
+            return;
+        }
+
+        Rectangle2D placeholderAnchor = placeholder.getAnchor();
+        double placeholderTextHeight = placeholder.getTextHeight() * 12700.0;
+        if (placeholderTextHeight <= 0) {
+            placeholderTextHeight = placeholderAnchor.getHeight();
+        }
+
+        // 保留正文占位符底部到下方文本框组顶部的模板间距。
+        double templateGap = footerTop - (placeholderAnchor.getY() + placeholderAnchor.getHeight());
+        double targetFooterTop = placeholderAnchor.getY() + placeholderTextHeight + templateGap;
+        double deltaY = targetFooterTop - footerTop;
+
+        moveShapeVertically(congregationShape, deltaY);
+        moveShapeVertically(reminderShape, deltaY);
+        logger.debug("赦罪底部文本框整体移动 {} EMU", deltaY);
+    }
+
+    /** 仅调整文本框的纵坐标，保持宽度、高度及两个文本框之间的相对位置。 */
+    private void moveShapeVertically(XSLFTextShape shape, double deltaY) {
+        Rectangle2D anchor = shape.getAnchor();
+        shape.setAnchor(new Rectangle2D.Double(
+                anchor.getX(),
+                anchor.getY() + deltaY,
+                anchor.getWidth(),
+                anchor.getHeight()));
     }
 }

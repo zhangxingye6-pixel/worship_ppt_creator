@@ -14,6 +14,9 @@ public class DeclarationEntity implements Serializable {
      */
     private String title = "";
 
+    /** 宣信方式：信条、使徒信经、迦克墩信经或尼西亚信经。 */
+    private String theme = "信条";
+
     /**
      * 讲员
      */
@@ -27,6 +30,14 @@ public class DeclarationEntity implements Serializable {
         this.title = title;
     }
 
+    public String getTheme() {
+        return theme == null || theme.isBlank() ? "信条" : theme;
+    }
+
+    public void setTheme(String theme) {
+        this.theme = theme;
+    }
+
     public String getSpeaker() {
         return speaker;
     }
@@ -38,6 +49,7 @@ public class DeclarationEntity implements Serializable {
     @Override
     public String toString() {
         return "DeclarationEntity{" +
+                "theme='" + theme + '\'' +
                 "title='" + title + '\'' +
                 ", speaker='" + speaker + '\'' +
                 '}';

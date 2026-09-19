@@ -5,6 +5,10 @@ package claygminx.worshipppt.exception;
  */
 public class WorshipStepException extends Exception {
 
+    public WorshipStepException(String message) {
+        super(message);
+    }
+
     public WorshipStepException(String message, Throwable throwable) {
         super(message, throwable);
     }

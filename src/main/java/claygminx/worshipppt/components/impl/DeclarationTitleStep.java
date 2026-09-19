@@ -45,6 +45,12 @@ public class DeclarationTitleStep extends AbstractWorshipStep {
 
     @Override
     public void execute() throws ScriptureNumberException, PPTLayoutException {
+        // 非“信条”模式使用独立的“信经标题”版式，只需将主题名称写入唯一的标题占位符。
+        if (!"信条".equals(declarationEntity.getTheme())) {
+            createDeclarationCreedTitle();
+            return;
+        }
+
         // step1: 数据准备
         String title = declarationEntity.getTitle();
         int firstNumber = ConfessionUtil.getIndexOfFirstNumber(title);
@@ -92,5 +98,35 @@ public class DeclarationTitleStep extends AbstractWorshipStep {
             }
         }
         logger.info("宣信标题幻灯片制作完成");
+    }
+
+    /**
+     * 创建使徒信经、迦克墩信经、尼西亚信经和亚他那修信经的标题页。
+     *
+     * <p>“信经标题”母版只包含一个 {@code {}} 占位符，标题格式与原宣信封面
+     * 的第二个占位符保持一致，即使用书名号包裹信经名称。</p>
+     */
+    private void createDeclarationCreedTitle() throws PPTLayoutException {
+        XMLSlideShow ppt = getPpt();
+        XSLFSlideLayout layout = ppt.findLayout(getLayout());
+        XSLFSlide slide = ppt.createSlide(layout);
+        XSLFTextShape placeholder = TextUtil.getPlaceholderSafely(slide, 0, getLayout(), "信经标题");
+        String title = "《" + declarationEntity.getTheme() + "》";
+
+        for (XSLFTextParagraph paragraph : placeholder.getTextParagraphs()) {
+            for (XSLFTextRun textRun : paragraph.getTextRuns()) {
+                if (textRun.getRawText().contains(getCustomPlaceholder())) {
+                    textRun.setText(textRun.getRawText().replace(getCustomPlaceholder(), title));
+                    textRun.setFontSize(SystemConfig.getUserConfigOrDefault(
+                            Dict.PPTProperty.GENERAL_STEP_COVER_FONT_SIZE,
+                            AbstractWorshipStep.DEFAULT_STEP_COVER_FONT_SIZE));
+                    textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+                    TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
+                    logger.debug("填充了信经标题：{}", title);
+                    return;
+                }
+            }
+        }
+        logger.info("宣信信经标题幻灯片制作完成：{}", title);
     }
 }

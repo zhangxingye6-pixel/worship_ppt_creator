@@ -54,9 +54,9 @@ public class DeclarationContentStep extends AbstractWorshipStep {
 
                     formatConfessionContent = confessionService.getFormatConfessionContent(confessionVerseEntities, Dict.ScriptureProperty.CONFESSION_FORMART1);
                 } catch (IOException | TemplateException e) {
-                    throw new ConfessionServiceException("宣信：内容格式化失败");
+                    throw new ConfessionServiceException("宣信：内容格式化失败：" + e.getMessage(), e);
                 } catch (ScriptureNumberException e) {
-                    throw new ScriptureNumberException(e.getMessage());
+                    throw new ScriptureNumberException(e.getMessage(), e);
                 }
 
 

@@ -120,7 +120,11 @@ public class RegularPoetryStep extends AbstractWorshipStep {
         } catch (PPTLayoutException e) {
             throw new PPTLayoutException(e.getMessage(), e);
         } catch (Exception e) {
-            throw new WorshipStepException("未知异常！", e);
+            String reason = e.getMessage();
+            if (reason == null || reason.isBlank()) {
+                reason = e.getClass().getSimpleName();
+            }
+            throw new WorshipStepException("处理诗歌“" + poetry.getName() + "”时失败：" + reason, e);
         }
     }
 

@@ -45,6 +45,9 @@ public class WorshipEntity implements Serializable {
      */
     private HolyCommunionEntity holyCommunion;
 
+    /** 感恩敬拜经文选项，用于选择感恩奉献阶段的 PPT 母版。 */
+    private String thanksgivingScripture;
+
     public CoverEntity getCover() {
         return cover;
     }
@@ -99,6 +102,14 @@ public class WorshipEntity implements Serializable {
 
     public void setHolyCommunion(HolyCommunionEntity holyCommunion) {
         this.holyCommunion = holyCommunion;
+    }
+
+    public String getThanksgivingScripture() {
+        return thanksgivingScripture;
+    }
+
+    public void setThanksgivingScripture(String thanksgivingScripture) {
+        this.thanksgivingScripture = thanksgivingScripture;
     }
 
     @Override

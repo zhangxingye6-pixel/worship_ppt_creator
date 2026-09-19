@@ -226,7 +226,11 @@ public class ScriptureUtil {
     public static String simplifyScripture(String scripture) {
         // 通过key取出配置中的正则表达式，去除经文中的某些符号
         String pattern = SystemConfig.getString(Dict.ScriptureProperty.REGEX);
-        return scripture.replaceAll(pattern, "");
+        String simplifiedScripture = scripture.replaceAll(pattern, "");
+
+        // 渲染前统一去除中文全角括号及括号内的注释内容，例如“（细拉）”。
+        // 该规则独立于外部配置，确保不同运行环境下的经文输出保持一致。
+        return simplifiedScripture.replaceAll("（[^）]*）", "");
     }
 
     /**
