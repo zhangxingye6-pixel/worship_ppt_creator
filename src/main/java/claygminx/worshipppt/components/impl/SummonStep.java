@@ -95,7 +95,7 @@ public class SummonStep extends AbstractWorshipStep {
         useCustomLanguage(paragraph);
         // 制表符
         XSLFTextRun beforeScriptureTextRun = paragraph.addNewTextRun();
-        beforeScriptureTextRun.setText("主领: ");
+        beforeScriptureTextRun.setText("主领:  ");
         beforeScriptureTextRun.setFontSize(scriptureFontSize);
         // 主领内容
         XSLFTextRun scriptureTextRun = paragraph.addNewTextRun();
@@ -107,7 +107,7 @@ public class SummonStep extends AbstractWorshipStep {
         paragraph = placeholder.addNewTextParagraph();
         paragraph.addNewTextRun().setText("\n");
         scriptureTextRun = paragraph.addNewTextRun();
-        scriptureTextRun.setText("回应: ");
+        scriptureTextRun.setText("回应:  ");
         scriptureTextRun.setFontSize(scriptureFontSize);
         TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
         // 回应内容使用蓝色、粗体和下划线，与原有宣召版式保持一致。

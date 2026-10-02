@@ -131,6 +131,7 @@ public class Dict {
      */
     public static class InputSection {
         public final static String COVER = "封面";
+        public final static String PUBLIC_PRAY = "公祷事项";
         public final static String SCRIPTURE = "经文";
         public final static String DECLARATION = "宣信";
         public final static String PREACH = "证道";

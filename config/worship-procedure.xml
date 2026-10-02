@@ -13,7 +13,7 @@
         <worship-step name="敬拜诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌颂扬敬拜上帝', poetryContent.worshipPoetryAlbum.poetryList[0].name"/>
         <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(0, 1), '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
         <worship-step name="公祷经文" layout="公祷经文" class="claygminx.worshipppt.components.impl.PublicPrayScriptureStep" data="#scriptureService, scriptureContent.publicPray"/>
-        <worship-step name="公祷事项" layout="公祷事项" class="claygminx.worshipppt.components.impl.PublicPrayContentStep" data="''"/>
+        <worship-step name="公祷事项" layout="公祷事项" class="claygminx.worshipppt.components.impl.PublicPrayContentStep" data="publicPrayContents"/>
         <worship-step name="读经" layout="读经" class="claygminx.worshipppt.components.impl.ReadingScriptureStep" data="#scriptureService, scriptureContent.readingScriptureList"/>
         <worship-step name="敬拜诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌颂扬敬拜上帝', poetryContent.worshipPoetryAlbum.poetryList[1].name, '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
         <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(1, 2), '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
@@ -67,7 +67,7 @@
         <worship-step name="敬拜诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌颂扬敬拜上帝', poetryContent.worshipPoetryAlbum.poetryList[0].name"/>
         <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(0, 1), '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
         <worship-step name="公祷经文" layout="公祷经文" class="claygminx.worshipppt.components.impl.PublicPrayScriptureStep" data="#scriptureService, scriptureContent.publicPray"/>
-        <worship-step name="公祷事项" layout="公祷事项" class="claygminx.worshipppt.components.impl.PublicPrayContentStep" data="''"/>
+        <worship-step name="公祷事项" layout="公祷事项" class="claygminx.worshipppt.components.impl.PublicPrayContentStep" data="publicPrayContents"/>
         <worship-step name="读经" layout="读经" class="claygminx.worshipppt.components.impl.ReadingScriptureStep" data="#scriptureService, scriptureContent.readingScriptureList"/>
         <worship-step name="敬拜诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌颂扬敬拜上帝', poetryContent.worshipPoetryAlbum.poetryList[1].name, '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
         <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(1, 2), '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
@@ -97,10 +97,14 @@
         <worship-step name="回应诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.responsePoetryAlbum.poetryList.subList(0, 1)"/>
         <worship-step name="圣餐" layout="圣餐-开始" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="领餐提醒" layout="圣餐-提醒" class="claygminx.worshipppt.components.impl.FixedStep"/>
-        <worship-step name="非会友领餐名单" layout="圣餐-名单" class="claygminx.worshipppt.components.impl.HolyCommunionNameListStep" data="holyCommunion.nameList"/>
-        <worship-step name="小要理问答91问" layout="圣餐-小要理问答91问" class="claygminx.worshipppt.components.impl.FixedStep"/>
-        <worship-step name="圣餐经文1" layout="圣餐-经文1" class="claygminx.worshipppt.components.impl.FixedStep"/>
-        <worship-step name="圣餐经文2" layout="圣餐-经文2" class="claygminx.worshipppt.components.impl.FixedStep"/>
+<!--        <worship-step name="非会友领餐名单" layout="圣餐-名单" class="claygminx.worshipppt.components.impl.HolyCommunionNameListStep" data="holyCommunion.nameList"/>-->
+        <worship-step name="小要理问答91问" layout="圣餐-大要理问答171问" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="圣餐经文" layout="圣餐-经文1" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="圣餐经文" layout="圣餐-经文2" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="圣餐经文" layout="圣餐-经文3" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="圣餐经文" layout="圣餐-经文4" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="圣餐经文" layout="圣餐-经文5" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="圣餐经文" layout="圣餐-经文6" class="claygminx.worshipppt.components.impl.FixedStep"/>
 <!--        <worship-step name="圣餐经文3" layout="圣餐-经文3" class="claygminx.worshipppt.components.impl.FixedStep"/>-->
         <!-- 圣餐诗歌拆分为两首：第一首在举饼祝谢前，第二首在举杯祝谢后。 -->
         <worship-step name="圣餐诗歌（举饼前）" layout="圣餐-诗歌" class="claygminx.worshipppt.components.impl.HolyCommunionPoetryStep" data="poetryContent.holyCommunionPoetryAlbum.poetryList.subList(0, 1)"/>
@@ -136,7 +140,7 @@
         <worship-step name="敬拜诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌颂扬敬拜上帝', poetryContent.worshipPoetryAlbum.poetryList[0].name"/>
         <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(0, 1), '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
         <worship-step name="公祷经文" layout="公祷经文" class="claygminx.worshipppt.components.impl.PublicPrayScriptureStep" data="#scriptureService, scriptureContent.publicPray"/>
-        <worship-step name="公祷事项" layout="公祷事项" class="claygminx.worshipppt.components.impl.PublicPrayContentStep" data="''"/>
+        <worship-step name="公祷事项" layout="公祷事项" class="claygminx.worshipppt.components.impl.PublicPrayContentStep" data="publicPrayContents"/>
         <worship-step name="读经" layout="读经" class="claygminx.worshipppt.components.impl.ReadingScriptureStep" data="#scriptureService, scriptureContent.readingScriptureList"/>
         <worship-step name="敬拜诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌颂扬敬拜上帝', poetryContent.worshipPoetryAlbum.poetryList[1].name, '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
         <worship-step name="敬拜诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.worshipPoetryAlbum.poetryList.subList(1, 2), '敬拜诗歌', poetryContent.mode, poetryContent.worshipPoetryAlbum.poetryList"/>
@@ -167,10 +171,14 @@
         <worship-step name="入会" layout="入会诗歌" class="claygminx.worshipppt.components.impl.InitiationStep" data="poetryContent.initiationPoetryAlbum.poetryList"/>
         <worship-step name="圣餐" layout="圣餐-开始" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="领餐提醒" layout="圣餐-提醒" class="claygminx.worshipppt.components.impl.FixedStep"/>
-        <worship-step name="非会友领餐名单" layout="圣餐-名单" class="claygminx.worshipppt.components.impl.HolyCommunionNameListStep" data="holyCommunion.nameList"/>
-        <worship-step name="小要理问答91问" layout="圣餐-小要理问答91问" class="claygminx.worshipppt.components.impl.FixedStep"/>
-        <worship-step name="圣餐经文1" layout="圣餐-经文1" class="claygminx.worshipppt.components.impl.FixedStep"/>
-        <worship-step name="圣餐经文2" layout="圣餐-经文2" class="claygminx.worshipppt.components.impl.FixedStep"/>
+<!--        <worship-step name="非会友领餐名单" layout="圣餐-名单" class="claygminx.worshipppt.components.impl.HolyCommunionNameListStep" data="holyCommunion.nameList"/>-->
+        <worship-step name="小要理问答91问" layout="圣餐-大要理问答171问" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="圣餐经文" layout="圣餐-经文1" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="圣餐经文" layout="圣餐-经文2" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="圣餐经文" layout="圣餐-经文3" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="圣餐经文" layout="圣餐-经文4" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="圣餐经文" layout="圣餐-经文5" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="圣餐经文" layout="圣餐-经文6" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <!-- 圣餐诗歌拆分为两首：第一首在举饼祝谢前，第二首在举杯祝谢后。 -->
         <worship-step name="圣餐诗歌（举饼前）" layout="圣餐-诗歌" class="claygminx.worshipppt.components.impl.HolyCommunionPoetryStep" data="poetryContent.holyCommunionPoetryAlbum.poetryList.subList(0, 1)"/>
         <worship-step name="圣餐举饼祝谢" layout="圣餐-举饼祝谢" class="claygminx.worshipppt.components.impl.FixedStep"/>

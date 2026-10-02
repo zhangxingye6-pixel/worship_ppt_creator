@@ -38,7 +38,15 @@ public class WorshipEntity implements Serializable {
     /**
      * 家事报告
      */
-    private List<String> familyReports;
+    /**
+     * 家事报告。该字段仅用于当前生成任务，不参与敬拜配置缓存序列化。
+     */
+    private transient List<String> familyReports;
+
+    /**
+     * 公祷事项。该字段仅用于当前生成任务，不参与敬拜配置缓存序列化。
+     */
+    private transient List<String> publicPrayContents;
 
     /**
      * 圣餐
@@ -94,6 +102,14 @@ public class WorshipEntity implements Serializable {
 
     public void setFamilyReports(List<String> familyReports) {
         this.familyReports = familyReports;
+    }
+
+    public List<String> getPublicPrayContents() {
+        return publicPrayContents;
+    }
+
+    public void setPublicPrayContents(List<String> publicPrayContents) {
+        this.publicPrayContents = publicPrayContents;
     }
 
     public HolyCommunionEntity getHolyCommunion() {

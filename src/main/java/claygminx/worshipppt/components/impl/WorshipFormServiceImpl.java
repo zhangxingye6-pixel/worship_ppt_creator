@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.text.html.HTMLDocument;
@@ -62,6 +64,8 @@ public class WorshipFormServiceImpl implements WorshipFormService {
     private Map<String, JTextField> preachTextFieldMap;
     private Map<String, JTextField> holyCommunionTextFieldMap;
     private List<JTextField> familyReportsTextFieldList;
+    /** 公祷事项输入行，仅在当前 GUI 会话中保留，不写入敬拜配置缓存。 */
+    private List<JTextField> publicPrayContentTextFieldList;
 
     // 布局用的常量
     public final static String APP_TITLE = "Worship PPT";
@@ -142,6 +146,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         addWorshipModelPanel(rootBox);
         addCoverPanel(rootBox);
         addAllPoetryAlbumPanel(rootBox);
+        addPublicPrayPanel(rootBox);
         addScripturePanel(rootBox);
         addDeclarationPanel(rootBox);
         addPreachPanel(rootBox);
@@ -330,7 +335,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             worshipDateTextField.setText(cover.getWorshipDate());
         }
 
-        churchNameTextField = addRegularTableInputRow(tableBox, CoverKey.CHURCH_NAME);
+        churchNameTextField = addRegularTableInputRow(tableBox, CoverKey.CHURCH_NAME, "默认留空");
         if (cover != null && !isEmpty(cover.getChurchName())) {
             churchNameTextField.setText(cover.getChurchName());
         }
@@ -585,6 +590,31 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         rootBox.add(panel);
     }
 
+    /**
+     * 添加公祷事项面板。
+     *
+     * <p>该面板位于经文面板之前，输入内容只在当前生成任务中使用，不从缓存恢复。</p>
+     *
+     * @param rootBox 根容器
+     */
+    private void addPublicPrayPanel(Box rootBox) {
+        Box tableBox = Box.createVerticalBox();
+        addTableTitle(tableBox, InputSection.PUBLIC_PRAY);
+
+        Box header = Box.createHorizontalBox();
+        tableBox.add(header);
+        addTableColumn(header, InputSection.PUBLIC_PRAY, REGULAR_TABLE_RIGHT_WIDTH);
+        addTableColumn(header, "操作", POETRY_OPERATION_COLUMN_WIDTH);
+
+        publicPrayContentTextFieldList = new LinkedList<>();
+        addPublicPrayContentTableInputRow(tableBox, 0);
+
+        JPanel panel = new JPanel();
+        panel.setName(InputSection.PUBLIC_PRAY);
+        panel.add(tableBox);
+        rootBox.add(panel);
+    }
+
     /** 添加宣信方式单选项，并将当前选择同步到待保存字段。 */
     private void addDeclarationThemeRadio(Box themeBox, String theme) {
         JRadioButton radio = new JRadioButton(theme, theme.equals(selectedDeclarationTheme));
@@ -752,19 +782,10 @@ public class WorshipFormServiceImpl implements WorshipFormService {
 
         familyReportsTextFieldList = new LinkedList<>();
 
-        // 如果有本地缓存，则加载
-        List<String> familyReportList = worshipEntity.getFamilyReports();
-        if (familyReportList != null && !familyReportList.isEmpty()) {
-            for (int i = 0; i < familyReportList.size(); i++) {
-                addFamilyReportsTableInputRow(tableBox, i);
-            }
-            int i = 0;
-            for (JTextField textField : familyReportsTextFieldList) {
-                textField.setText(familyReportList.get(i++));
-            }
-        } else {
-            addFamilyReportsTableInputRow(tableBox, 0);
-        }
+        // 家事报告不参与本地缓存，每次打开面板都提供两行默认输入。
+        addFamilyReportsTableInputRow(tableBox, 0);
+        familyReportsTextFieldList.get(0).setText("周间聚会");
+        addFamilyReportsTableInputRow(tableBox, 1);
 
         JPanel panel = new JPanel();
         panel.setName(InputSection.FAMILY_REPORTS);
@@ -871,9 +892,29 @@ public class WorshipFormServiceImpl implements WorshipFormService {
      * @return 是否检查通过
      */
     private boolean prepare() {
-        return prepareCover() && preparePoetry() && prepareScriptureContent() && prepareDeclaration()
+        return prepareCover() && preparePoetry() && preparePublicPrayContent() && prepareScriptureContent() && prepareDeclaration()
                 && preparePreach() && prepareFamilyReport() && prepareThanksgivingScripture()
                 && prepareHolyCommunion();
+    }
+
+    /**
+     * 收集公祷事项供本次 PPT 生成使用。
+     *
+     * <p>公祷事项属于临时输入，因此只写入 {@link WorshipEntity} 的 transient 字段，
+     * 不会进入本地敬拜配置缓存。</p>
+     */
+    private boolean preparePublicPrayContent() {
+        logger.debug("检查公祷事项...");
+
+        List<String> publicPrayContents = new ArrayList<>();
+        for (JTextField textField : publicPrayContentTextFieldList) {
+            String item = textField.getText().trim();
+            if (!isEmpty(item)) {
+                publicPrayContents.add(item);
+            }
+        }
+        worshipEntity.setPublicPrayContents(publicPrayContents);
+        return true;
     }
 
     private boolean prepareCover() {
@@ -1413,11 +1454,11 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         }
 
         // 诗歌名称
-        JTextField poetryNameTextField = addTableInputTextCell(rowBox, POETRY_TABLE_COLUMN_WIDTH_1);
+        JTextField poetryNameTextField = addTableInputTextCell(rowBox, POETRY_TABLE_COLUMN_WIDTH_1, "自动识别");
 //        poetryNameTextField.setToolTipText("建议带上书名号《》");
 
         // 歌谱图的路径
-        JTextField poetryDirectoryTextField = addTableInputTextCell(rowBox, POETRY_TABLE_COLUMN_WIDTH_2);
+        JTextField poetryDirectoryTextField = addTableInputTextCell(rowBox, POETRY_TABLE_COLUMN_WIDTH_2, "拖动目录到输入栏");
         poetryDirectoryTextField.setToolTipText("该路径文件夹必须只包含此诗歌的歌谱图，歌谱图是用JP-WORD制作的，支持拖拽文件夹");
         poetryDirectoryTextField.setTransferHandler(new TransferHandler() {
             @Override
@@ -1499,8 +1540,21 @@ public class WorshipFormServiceImpl implements WorshipFormService {
      * @return 文本框
      */
     private JTextField addTableInputTextCell(Box rowBox, int width) {
-        // 输入组件
-        JTextField textField = new JTextField();
+        return addTableInputTextCell(rowBox, width, null);
+    }
+
+    /**
+     * 向表格中添加输入单元格，并按需显示不参与实际输入的提示文本。
+     *
+     * @param rowBox      当前表格行
+     * @param width       单元格宽度
+     * @param placeholder 空值时显示的浅色提示，传入 {@code null} 表示不显示
+     * @return 输入框
+     */
+    private JTextField addTableInputTextCell(Box rowBox, int width, String placeholder) {
+        JTextField textField = placeholder == null
+                ? new JTextField()
+                : new PlaceholderTextField(placeholder);
         textField.setPreferredSize(new Dimension(width - PADDING_LEFT, TEXT_FIELD_HEIGHT));
 
         leftMiddle(rowBox, textField, width);
@@ -1531,11 +1585,23 @@ public class WorshipFormServiceImpl implements WorshipFormService {
      * @return 文本框
      */
     private JTextField addRegularTableInputRow(Box tableBox, String labelName) {
+        return addRegularTableInputRow(tableBox, labelName, null);
+    }
+
+    /**
+     * 添加一行常规输入，并按需设置空值时显示的提示文本。
+     *
+     * @param tableBox      表格容器
+     * @param labelName     标签文本
+     * @param placeholder   输入框为空时显示的提示
+     * @return 输入框
+     */
+    private JTextField addRegularTableInputRow(Box tableBox, String labelName, String placeholder) {
         Box rowBox = Box.createHorizontalBox();
         tableBox.add(rowBox);
 
         JLabel label = addRegularTableInputLabel(rowBox, labelName);
-        JTextField textField = addTableInputTextCell(rowBox, REGULAR_TABLE_RIGHT_WIDTH);
+        JTextField textField = addTableInputTextCell(rowBox, REGULAR_TABLE_RIGHT_WIDTH, placeholder);
         label.setLabelFor(textField);
 
         return textField;
@@ -1732,10 +1798,66 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         Box rowBox = Box.createHorizontalBox();
         tableBox.add(rowBox, familyReportIndex + ROW_INDEX_OFFSET);
 
-        JTextField textField = addTableInputTextCell(rowBox, REGULAR_TABLE_RIGHT_WIDTH);
+        JTextField textField = addTableInputTextCell(rowBox, REGULAR_TABLE_RIGHT_WIDTH, "无需添加序号");
         familyReportsTextFieldList.add(familyReportIndex, textField);
 
         addFamilyReportTableOperationCell(rowBox);
+    }
+
+    /**
+     * 添加公祷事项输入行。
+     *
+     * @param tableBox        公祷事项表格
+     * @param publicPrayIndex 输入行索引，从0开始
+     */
+    private void addPublicPrayContentTableInputRow(Box tableBox, int publicPrayIndex) {
+        Box rowBox = Box.createHorizontalBox();
+        tableBox.add(rowBox, publicPrayIndex + ROW_INDEX_OFFSET);
+
+        JTextField textField = addTableInputTextCell(rowBox, REGULAR_TABLE_RIGHT_WIDTH, "无需添加序号");
+        publicPrayContentTextFieldList.add(publicPrayIndex, textField);
+        addPublicPrayContentTableOperationCell(rowBox);
+    }
+
+    /**
+     * 添加公祷事项行操作按钮，并维护输入行列表与界面顺序一致。
+     *
+     * @param rowBox 当前输入行
+     */
+    private void addPublicPrayContentTableOperationCell(Box rowBox) {
+        JButton[] buttons = addOperationButtons(rowBox);
+        JButton insertButton = buttons[0];
+        JButton deleteButton = buttons[1];
+        Box tableBox = (Box) rowBox.getParent();
+
+        insertButton.setToolTipText("在这行下面插入一项公祷事项");
+        deleteButton.setToolTipText("删除当前公祷事项");
+
+        insertButton.addActionListener(action -> run(() -> {
+            int currentIndex = getIndexOfRowBox(tableBox, rowBox);
+            if (currentIndex != -1) {
+                int nextIndex = currentIndex - ROW_INDEX_OFFSET + 1;
+                addPublicPrayContentTableInputRow(tableBox, nextIndex);
+                tableBox.getRootPane().revalidate();
+            }
+        }));
+        deleteButton.addActionListener(action -> run(() -> {
+            if (publicPrayContentTextFieldList.size() == 1) {
+                JOptionPane.showMessageDialog(
+                        tableBox.getRootPane(),
+                        "请保留这一行！",
+                        "提示",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            int currentIndex = getIndexOfRowBox(tableBox, rowBox);
+            if (currentIndex != -1) {
+                publicPrayContentTextFieldList.remove(currentIndex - ROW_INDEX_OFFSET);
+                tableBox.remove(rowBox);
+                tableBox.getRootPane().revalidate();
+            }
+        }));
     }
 
     // 添加家事报告操作单元格
@@ -2264,6 +2386,64 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             logger.warn("无法读取敬拜实体！", e);
         }
         return null;
+    }
+
+    /**
+     * Swing 没有原生 placeholder，本组件仅在输入框为空且未获得焦点时绘制提示文本。
+     * 提示不会写入文本模型，因此不会进入公祷事项数据或 PPT。
+     */
+    private static final class PlaceholderTextField extends JTextField {
+
+        private final String placeholder;
+
+        private PlaceholderTextField(String placeholder) {
+            this.placeholder = placeholder;
+            setToolTipText(placeholder);
+
+            getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    repaint();
+                }
+
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    repaint();
+                }
+
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    repaint();
+                }
+            });
+            addFocusListener(new FocusAdapter() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                    repaint();
+                }
+
+                @Override
+                public void focusLost(FocusEvent e) {
+                    repaint();
+                }
+            });
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            super.paintComponent(graphics);
+            if (!hasFocus() && getText().isEmpty()) {
+                Graphics2D graphics2D = (Graphics2D) graphics.create();
+                graphics2D.setColor(new Color(145, 145, 145));
+                graphics2D.setFont(getFont());
+
+                Insets insets = getInsets();
+                FontMetrics fontMetrics = graphics2D.getFontMetrics();
+                int baseline = (getHeight() - fontMetrics.getHeight()) / 2 + fontMetrics.getAscent();
+                graphics2D.drawString(placeholder, insets.left + 2, baseline);
+                graphics2D.dispose();
+            }
+        }
     }
 
 }
