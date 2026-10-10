@@ -28,6 +28,8 @@ public class ForgiveSinsScriptureStep extends AbstractWorshipStep {
 
     // 文本常量
     private final static double DEFAULT_LINE_SPACING = 120.0;
+    /** 在主领经文与下方“会众”区域之间额外保留的视觉间距，单位为磅。 */
+    private static final double CONGREGATION_EXTRA_GAP = 36.0;
 
     public ForgiveSinsScriptureStep(XMLSlideShow ppt, String layout, ScriptureService scriptureService, String scriptureNumber) {
         super(ppt, layout);
@@ -81,17 +83,18 @@ public class ForgiveSinsScriptureStep extends AbstractWorshipStep {
 
                     textRun.setText(rawText.replace(getCustomPlaceholder(), titleAndScripture[1]));
                     textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
+                    textRun.setBold(true);
                     TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
                     paragraph.setLineSpacing(lineSpacing);
                     useCustomLanguage(paragraph);
                     breakTag = true;
                 }
-                if (rawText != null && rawText.contains("会众：")){
-                    textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
-                    TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
-                    textRun.setBold(true);
-                    if (breakTag) break;
-                }
+//                if (rawText != null && rawText.contains("会众：")){
+//                    textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
+//                    TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
+//                    textRun.setBold(true);
+//                    if (breakTag) break;
+//                }
                 if (rawText != null && rawText.contains("感谢主赦免我们的罪")){
                     textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
                     TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
@@ -141,14 +144,16 @@ public class ForgiveSinsScriptureStep extends AbstractWorshipStep {
         }
 
         Rectangle2D placeholderAnchor = placeholder.getAnchor();
-        double placeholderTextHeight = placeholder.getTextHeight() * 12700.0;
+        // POI 的文本高度和图形坐标均以磅为单位，计算时不能再次换算为 EMU。
+        double placeholderTextHeight = placeholder.getTopInset() + placeholder.getTextHeight();
         if (placeholderTextHeight <= 0) {
             placeholderTextHeight = placeholderAnchor.getHeight();
         }
 
         // 保留正文占位符底部到下方文本框组顶部的模板间距。
         double templateGap = footerTop - (placeholderAnchor.getY() + placeholderAnchor.getHeight());
-        double targetFooterTop = placeholderAnchor.getY() + placeholderTextHeight + templateGap;
+        double targetFooterTop = placeholderAnchor.getY() + placeholderTextHeight + templateGap
+                + CONGREGATION_EXTRA_GAP;
         double deltaY = targetFooterTop - footerTop;
 
         moveShapeVertically(congregationShape, deltaY);

@@ -31,7 +31,7 @@ public class DeclarationEntity implements Serializable {
     }
 
     public String getTheme() {
-        return theme == null || theme.isBlank() ? "信条" : theme;
+        return theme == null || theme.isBlank() ? "信条" : theme.trim();
     }
 
     public void setTheme(String theme) {

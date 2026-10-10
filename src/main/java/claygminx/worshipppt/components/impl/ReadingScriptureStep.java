@@ -14,6 +14,7 @@ import claygminx.worshipppt.util.TextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.poi.xslf.usermodel.*;
+import org.apache.poi.sl.usermodel.TextParagraph;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
@@ -35,8 +36,15 @@ public class ReadingScriptureStep extends AbstractWorshipStep {
 //    private final static int BEST_HEIGHT = 207;
 //    private final static int MAX_CHAR_COUNT = 32;\
     private final static int BEST_VERSE_NUMBER = 2;
-    private final static Pattern SCRIPTURE_REFERENCE_PREFIX = Pattern.compile("^【[^】]+】");
+    /** PowerPoint 使用百分比表示段落行距，120 表示 1.2 倍行距。 */
+    private static final double SCRIPTURE_LINE_SPACING = 120.0;
+    /** 主领与下一段会众内容之间的段后间距，单位为磅。 */
+    private static final double ROLE_SECTION_SPACE_AFTER = 12.0;
+    /** 续行缩进使用前缀实际估算宽度的 92%，并保留角色与经文正文的视觉对齐。 */
+    private static final double SCRIPTURE_HANGING_INDENT_RATIO = 0.92;
     private final static Pattern SCRIPTURE_REFERENCE = Pattern.compile("^【(.+?)(\\d+):(\\d+)】(.*)$");
+    /** 读经模板输出的角色标签和章节引用，例如“主领:[诗31:1]  经文正文”。 */
+    private static final Pattern FORMATTED_SCRIPTURE = Pattern.compile("^(主领:|会众:|合　:)(\\[[^\\]]*\\])  (.*)$");
 
     private final ScriptureService scriptureService;
     private final List<String> scriptureNumbers;
@@ -142,22 +150,89 @@ public class ReadingScriptureStep extends AbstractWorshipStep {
                 // 往正文添加一段经文，注意，可能因为经文字数较多，一行容不下。
                 placeholder = TextUtil.getPlaceholderSafely(slide, 1, getLayout(), "正文部分");
                 XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
+                paragraph.setLineSpacing(SCRIPTURE_LINE_SPACING);
                 useCustomLanguage(paragraph);
-                XSLFTextRun textRun = paragraph.addNewTextRun();
                 String trimScriptureItem = scriptureItem.trim();
-                textRun.setText(trimScriptureItem);
-                textRun.setFontSize(scriptureFontSize);
 
-
-                // format6 已经写入章节标识和角色前缀，这里只负责按角色设置 PPT 字体颜色。
-                if (trimScriptureItem.startsWith("会众：")) {
-                    TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
-                } else if (trimScriptureItem.startsWith("主领：")) {
-                    TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
-                } else {
-                    TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_RED);
-                }
+                // 角色标签、章节引用和经文正文使用独立 run，避免标签和引用被正文的粗体样式带上。
+                addFormattedScriptureRuns(paragraph, trimScriptureItem, scriptureFontSize);
         }
+    }
+
+    /**
+     * 将格式化经文拆分为角色标签、章节引用和正文三个 run。
+     * <p>只有正文加粗，标签与章节引用保持普通字重；主领段落增加段后间距，
+     * 让启应内容在投影时具有清晰的视觉分组。</p>
+     *
+     * @param paragraph 当前经文段落
+     * @param scriptureItem scripture-format6.ftl 输出的一整行经文
+     * @param scriptureFontSize 经文字号
+     */
+    private void addFormattedScriptureRuns(XSLFTextParagraph paragraph, String scriptureItem,
+                                           double scriptureFontSize) {
+        java.util.regex.Matcher matcher = FORMATTED_SCRIPTURE.matcher(scriptureItem);
+        if (!matcher.matches()) {
+            // 对异常或自定义格式保留兼容性：整行作为正文处理，但仍遵循正文加粗规则。
+            addReadingRun(paragraph, scriptureItem, scriptureFontSize,
+                    TextUtil.FontColor.RGB_FONT_COLOR_RED, true);
+            return;
+        }
+
+        String role = matcher.group(1);
+        int[] fontColor = "会众:".equals(role)
+                ? TextUtil.FontColor.RGB_FONT_COLOR_BLUE
+                : "主领:".equals(role)
+                ? TextUtil.FontColor.RGB_FONT_COLOR_BLACK
+                : TextUtil.FontColor.RGB_FONT_COLOR_RED;
+
+        // 正文前有一个空格；悬挂缩进宽度按角色、编号和这个空格一并计算。
+        String scripturePrefix = role + matcher.group(2) + " ";
+        double hangingIndent = estimateTextWidth(scripturePrefix, scriptureFontSize)
+                * SCRIPTURE_HANGING_INDENT_RATIO;
+        paragraph.setTextAlign(TextParagraph.TextAlign.LEFT);
+        paragraph.setLeftMargin(hangingIndent);
+        paragraph.setIndent(-hangingIndent);
+
+        addReadingRun(paragraph, role, scriptureFontSize, fontColor, false);
+        addReadingRun(paragraph, matcher.group(2), scriptureFontSize, fontColor, false);
+        addReadingRun(paragraph, " " + matcher.group(3), scriptureFontSize, fontColor, true);
+
+        if ("主领:".equals(role)) {
+            paragraph.setSpaceAfter(ROLE_SECTION_SPACE_AFTER);
+        }
+    }
+
+    /** 添加一个具有统一字号、字体、颜色和字重的读经文本 run。 */
+    private void addReadingRun(XSLFTextParagraph paragraph, String text, double fontSize,
+                               int[] fontColor, boolean bold) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        XSLFTextRun textRun = paragraph.addNewTextRun();
+        textRun.setText(text);
+        textRun.setFontSize(fontSize);
+        textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+        textRun.setBold(bold);
+        TextUtil.setScriptureFontColor(textRun, fontColor);
+    }
+
+    /**
+     * 按中英文字符的大致显示宽度估算前缀磅值，用于让经文续行对齐正文起点。
+     * 全角字符按一个字号宽度计算，半角字符按半个字号宽度计算，空格按四分之一计算。
+     */
+    private double estimateTextWidth(String text, double fontSize) {
+        double widthUnits = 0.0;
+        for (int i = 0; i < text.length(); i++) {
+            char character = text.charAt(i);
+            if (character == ' ') {
+                widthUnits += 0.25;
+            } else if (character <= 0x00FF) {
+                widthUnits += 0.5;
+            } else {
+                widthUnits += 1.0;
+            }
+        }
+        return widthUnits * fontSize;
     }
 
     /**

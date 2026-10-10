@@ -545,7 +545,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         declarationTextFieldMap = new HashMap<>();
         DeclarationEntity declaration = worshipEntity.getDeclaration();
         selectedDeclarationTheme = declaration == null ? "信条" : declaration.getTheme();
-        if (!List.of("信条", "使徒信经", "迦克墩信经", "尼西亚信经", "亚他那修信经").contains(selectedDeclarationTheme)) {
+        if (!List.of("信条", "西敏大要理问答", "西敏小要理问答", "使徒信经", "迦克墩信经", "尼西亚信经", "亚他那修信经").contains(selectedDeclarationTheme)) {
             selectedDeclarationTheme = "信条";
         }
 
@@ -554,6 +554,8 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         themeBox.add(Box.createHorizontalStrut(5));
         declarationThemeGroup = new ButtonGroup();
         addDeclarationThemeRadio(themeBox, "信条");
+        addDeclarationThemeRadio(themeBox, "西敏大要理问答");
+        addDeclarationThemeRadio(themeBox, "西敏小要理问答");
         addDeclarationThemeRadio(themeBox, "使徒信经");
         addDeclarationThemeRadio(themeBox, "迦克墩信经");
         addDeclarationThemeRadio(themeBox, "尼西亚信经");
@@ -569,7 +571,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         titleTextField.setMinimumSize(declarationTitleInputSize);
         titleTextField.setPreferredSize(declarationTitleInputSize);
         titleTextField.setMaximumSize(declarationTitleInputSize);
-        titleTextField.setToolTipText("目前仅支持‘西敏信条18:1-3、信条20:1,3、信条18-19等类似格式输入’");
+        titleTextField.setToolTipText(getDeclarationTitleHint());
         declarationTextFieldMap.put(DeclarationKey.TITLE, titleTextField);
         // 现阶段不需要讲员面板
 //        JTextField speakerTextField = addRegularTableInputRow(tableBox, DeclarationKey.SPEAKER);
@@ -583,7 +585,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
 //                speakerTextField.setText(declaration.getSpeaker());
 //            }
         }
-        setDeclarationTitleVisibility("信条".equals(selectedDeclarationTheme), false);
+        setDeclarationTitleVisibility(List.of("信条", "西敏大要理问答", "西敏小要理问答").contains(selectedDeclarationTheme), false);
 
         JPanel panel = new JPanel();
         panel.add(tableBox);
@@ -629,7 +631,22 @@ public class WorshipFormServiceImpl implements WorshipFormService {
 
     /** 根据宣信方式显示或隐藏信条主题输入行。 */
     private void updateDeclarationTitleVisibility() {
-        setDeclarationTitleVisibility("信条".equals(selectedDeclarationTheme), true);
+        JTextField titleTextField = declarationTextFieldMap.get(DeclarationKey.TITLE);
+        if (titleTextField != null) {
+            titleTextField.setToolTipText(getDeclarationTitleHint());
+        }
+        setDeclarationTitleVisibility(List.of("信条", "西敏大要理问答", "西敏小要理问答").contains(selectedDeclarationTheme), true);
+    }
+
+    /** 根据宣信方式说明输入格式，避免把数据库内部章号暴露给大要理问答用户。 */
+    private String getDeclarationTitleHint() {
+        if ("西敏大要理问答".equals(selectedDeclarationTheme)) {
+            return "只输入题号，例如：1-3、1,3；程序会自动按第1章解析";
+        }
+        if ("西敏小要理问答".equals(selectedDeclarationTheme)) {
+            return "只输入题号，例如：1-3、1,3；程序会自动按第1章解析";
+        }
+        return "例如：西敏信条18:1-3、信条20:1,3、信条18-19";
     }
 
     /**
@@ -1090,7 +1107,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
 
         JTextField declarationTitleTextField = declarationTextFieldMap.get(DeclarationKey.TITLE);
 //        JTextField declarationSpeakerTextField = declarationTextFieldMap.get(DeclarationKey.SPEAKER);
-        if ("信条".equals(selectedDeclarationTheme) && isEmpty(declarationTitleTextField.getText())) {
+        if (List.of("信条", "西敏大要理问答", "西敏小要理问答").contains(selectedDeclarationTheme) && isEmpty(declarationTitleTextField.getText())) {
             warn("需要填写宣信主题！");
             return false;
         }

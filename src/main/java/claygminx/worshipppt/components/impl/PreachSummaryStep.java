@@ -39,10 +39,11 @@ public class PreachSummaryStep extends AbstractWorshipStep {
 
         placeholder = TextUtil.getPlaceholderSafely(slide, 1, getLayout(), "经文编号部分");
         textRun = TextUtil.clearAndCreateTextRun(placeholder);
-        textRun.setText("证道经文: " + preachEntity.getScriptureNumber());
+        // 封面第二个占位符只显示章节编号，说明文字由 PPT 母版负责呈现。
+        textRun.setText(preachEntity.getScriptureNumber());
         textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
         textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
-        textRun.setBold(true);
+        textRun.setBold(false);
         TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
 
         logger.info("证道摘要幻灯片制作完成");

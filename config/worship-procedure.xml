@@ -22,8 +22,10 @@
         <worship-step name="赦罪" layout="赦罪" class="claygminx.worshipppt.components.impl.ForgiveSinsScriptureStep" data="#scriptureService, scriptureContent.forgiveSins"/>
         <worship-step name="宣信" layout="宣信封面" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="宣信" layout="宣信标题" class="claygminx.worshipppt.components.impl.DeclarationTitleStep" data="#confessionService, declaration" if="declaration.theme == '信条'"/>
-        <worship-step name="宣信" layout="宣信内容" class="claygminx.worshipppt.components.impl.DeclarationContentStep" data="#confessionService, declaration" if="declaration.theme == '信条'"/>
+        <!-- 非信条模式统一先生成宣信标题，再按所选类型生成内容页或固定信经页。 -->
         <worship-step name="宣信" layout="信经标题" class="claygminx.worshipppt.components.impl.DeclarationTitleStep" data="#confessionService, declaration" if="declaration.theme != '信条'"/>
+        <!-- 可变宣信内容统一由组件按主题渲染，避免 OGNL 条件未命中时只生成封面。 -->
+        <worship-step name="宣信" layout="宣信内容" class="claygminx.worshipppt.components.impl.DeclarationContentStep" data="#confessionService, declaration"/>
         <!-- 其他四种宣信方式先生成信经标题，再使用对应的 PPT layout。 -->
         <worship-step name="使徒信经" layout="宣信_使徒信经" class="claygminx.worshipppt.components.impl.FixedStep" if="declaration.theme == '使徒信经'"/>
         <worship-step name="迦克墩信经" layout="宣信_迦克墩信经1" class="claygminx.worshipppt.components.impl.FixedStep" if="declaration.theme == '迦克墩信经'"/>
@@ -43,9 +45,9 @@
         <worship-step name="回应诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.responsePoetryAlbum.poetryList.subList(0, 1)"/>
         <worship-step name="感恩奉献" layout="感恩奉献-林后8:9罗12:1-2" class="claygminx.worshipppt.components.impl.FixedStep" if="thanksgivingScripture == '林后8:9; 罗12:1–2'"/>
         <worship-step name="感恩奉献" layout="感恩奉献-玛3:8-12" class="claygminx.worshipppt.components.impl.FixedStep" if="thanksgivingScripture == '玛3:8-12'"/>
-        <worship-step name="奉献诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以感恩奉献敬拜神', poetryContent.offertoryPoetryAlbum.poetryList[0].name"/>
+        <worship-step name="奉献诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以感恩奉献敬拜上帝', poetryContent.offertoryPoetryAlbum.poetryList[0].name"/>
         <worship-step name="奉献诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.offertoryPoetryAlbum.poetryList.subList(0, 1)"/>
-        <worship-step name="三一颂" layout="三一颂" class="claygminx.worshipppt.components.impl.OdeToTheTrinityStep" data="'诗歌'"/>
+        <worship-step name="三一颂" layout="三一颂" class="claygminx.worshipppt.components.impl.OdeToTheTrinityStep" data="'以诗歌回应上帝'"/>
         <worship-step name="会毕祝福" layout="会毕祝福" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="祝祷" layout="祝祷" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="阿们二叠颂" layout="阿们二叠颂" class="claygminx.worshipppt.components.impl.FixedStep"/>
@@ -76,8 +78,9 @@
         <worship-step name="赦罪" layout="赦罪" class="claygminx.worshipppt.components.impl.ForgiveSinsScriptureStep" data="#scriptureService, scriptureContent.forgiveSins"/>
         <worship-step name="宣信证道" layout="宣信封面" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="宣信" layout="宣信标题" class="claygminx.worshipppt.components.impl.DeclarationTitleStep" data="#confessionService, declaration" if="declaration.theme == '信条'"/>
-        <worship-step name="宣信" layout="宣信内容" class="claygminx.worshipppt.components.impl.DeclarationContentStep" data="#confessionService, declaration" if="declaration.theme == '信条'"/>
         <worship-step name="宣信" layout="信经标题" class="claygminx.worshipppt.components.impl.DeclarationTitleStep" data="#confessionService, declaration" if="declaration.theme != '信条'"/>
+        <!-- 宣信内容由组件根据主题分流；要理模式不能受“信条”条件限制。 -->
+        <worship-step name="宣信" layout="宣信内容" class="claygminx.worshipppt.components.impl.DeclarationContentStep" data="#confessionService, declaration"/>
         <!-- 其他四种宣信方式先生成信经标题，再使用对应的 PPT layout。 -->
         <worship-step name="使徒信经" layout="宣信_使徒信经" class="claygminx.worshipppt.components.impl.FixedStep" if="declaration.theme == '使徒信经'"/>
         <worship-step name="迦克墩信经" layout="宣信_迦克墩信经1" class="claygminx.worshipppt.components.impl.FixedStep" if="declaration.theme == '迦克墩信经'"/>
@@ -116,9 +119,9 @@
         <worship-step name="圣餐祷告" layout="圣餐-祷告" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="感恩奉献" layout="感恩奉献-林后8:9罗12:1-2" class="claygminx.worshipppt.components.impl.FixedStep" if="thanksgivingScripture == '林后8:9; 罗12:1–2'"/>
         <worship-step name="感恩奉献" layout="感恩奉献-玛3:8-12" class="claygminx.worshipppt.components.impl.FixedStep" if="thanksgivingScripture == '玛3:8-12'"/>
-        <worship-step name="奉献诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以感恩奉献敬拜神', poetryContent.offertoryPoetryAlbum.poetryList[0].name"/>
+        <worship-step name="奉献诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以感恩奉献敬拜上帝', poetryContent.offertoryPoetryAlbum.poetryList[0].name"/>
         <worship-step name="奉献诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.offertoryPoetryAlbum.poetryList.subList(0, 1)"/>
-        <worship-step name="三一颂" layout="三一颂" class="claygminx.worshipppt.components.impl.OdeToTheTrinityStep" data="'诗歌'"/>
+        <worship-step name="三一颂" layout="三一颂" class="claygminx.worshipppt.components.impl.OdeToTheTrinityStep" data="'以诗歌回应上帝'"/>
         <worship-step name="会毕祝福" layout="会毕祝福" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="祝祷" layout="祝祷" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="阿们二叠颂" layout="阿们二叠颂" class="claygminx.worshipppt.components.impl.FixedStep"/>
@@ -149,8 +152,9 @@
         <worship-step name="赦罪" layout="赦罪" class="claygminx.worshipppt.components.impl.ForgiveSinsScriptureStep" data="#scriptureService, scriptureContent.forgiveSins"/>
         <worship-step name="宣信证道" layout="宣信证道" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="宣信" layout="宣信标题" class="claygminx.worshipppt.components.impl.DeclarationTitleStep" data="#confessionService, declaration" if="declaration.theme == '信条'"/>
-        <worship-step name="宣信" layout="宣信内容" class="claygminx.worshipppt.components.impl.DeclarationContentStep" data="#confessionService, declaration" if="declaration.theme == '信条'"/>
         <worship-step name="宣信" layout="信经标题" class="claygminx.worshipppt.components.impl.DeclarationTitleStep" data="#confessionService, declaration" if="declaration.theme != '信条'"/>
+        <!-- 宣信内容由组件根据主题分流；要理模式不能受“信条”条件限制。 -->
+        <worship-step name="宣信" layout="宣信内容" class="claygminx.worshipppt.components.impl.DeclarationContentStep" data="#confessionService, declaration"/>
         <!-- 其他四种宣信方式先生成信经标题，再使用对应的 PPT layout。 -->
         <worship-step name="使徒信经" layout="宣信_使徒信经" class="claygminx.worshipppt.components.impl.FixedStep" if="declaration.theme == '使徒信经'"/>
         <worship-step name="迦克墩信经" layout="宣信_迦克墩信经1" class="claygminx.worshipppt.components.impl.FixedStep" if="declaration.theme == '迦克墩信经'"/>
@@ -189,9 +193,9 @@
         <worship-step name="圣餐祷告" layout="圣餐-祷告" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="感恩奉献" layout="感恩奉献-林后8:9罗12:1-2" class="claygminx.worshipppt.components.impl.FixedStep" if="thanksgivingScripture == '林后8:9; 罗12:1–2'"/>
         <worship-step name="感恩奉献" layout="感恩奉献-玛3:8-12" class="claygminx.worshipppt.components.impl.FixedStep" if="thanksgivingScripture == '玛3:8-12'"/>
-        <worship-step name="奉献诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以感恩奉献敬拜神', poetryContent.offertoryPoetryAlbum.poetryList[0].name"/>
+        <worship-step name="奉献诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以感恩奉献敬拜上帝', poetryContent.offertoryPoetryAlbum.poetryList[0].name"/>
         <worship-step name="奉献诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.offertoryPoetryAlbum.poetryList.subList(0, 1)"/>
-        <worship-step name="三一颂" layout="三一颂" class="claygminx.worshipppt.components.impl.OdeToTheTrinityStep" data="'诗歌'"/>
+        <worship-step name="三一颂" layout="三一颂" class="claygminx.worshipppt.components.impl.OdeToTheTrinityStep" data="'以诗歌回应上帝'"/>
         <worship-step name="会毕祝福" layout="会毕祝福" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="祝祷" layout="祝祷" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="阿们二叠颂" layout="阿们二叠颂" class="claygminx.worshipppt.components.impl.FixedStep"/>

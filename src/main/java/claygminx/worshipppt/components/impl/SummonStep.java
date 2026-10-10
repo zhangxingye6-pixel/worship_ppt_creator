@@ -22,6 +22,12 @@ public class SummonStep extends AbstractWorshipStep {
 
     private final static Logger logger = LoggerFactory.getLogger(SummonStep.class);
 
+    /** PowerPoint 使用百分比表示段落行距，120 表示 1.2 倍行距。 */
+    private static final double SUMMON_LINE_SPACING = 120.0;
+
+    /** 宣召正文首行缩进约两个中文字符，与约 8 个半角空格的视觉宽度相当。 */
+    private static final double SUMMON_CONTENT_FIRST_LINE_INDENT = 72.0;
+
     /**
      * 回应方式，取值为“经文”或“自定义”。
      */
@@ -91,34 +97,55 @@ public class SummonStep extends AbstractWorshipStep {
 
         placeholder = TextUtil.getPlaceholderSafely(slide, 1, getLayout(), "正文部分");
         placeholder.clearText();
-        XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
-        useCustomLanguage(paragraph);
-        // 制表符
-        XSLFTextRun beforeScriptureTextRun = paragraph.addNewTextRun();
-        beforeScriptureTextRun.setText("主领:  ");
-        beforeScriptureTextRun.setFontSize(scriptureFontSize);
-        // 主领内容
-        XSLFTextRun scriptureTextRun = paragraph.addNewTextRun();
-        scriptureTextRun.setText(leaderText);
-        scriptureTextRun.setFontSize(scriptureFontSize);
-        TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
+        // 标签独占一行，正文另起一行并统一缩进，避免正文换行后回到标签左侧。
+        addSummonLabelParagraph(placeholder, "主领:  ", scriptureFontSize,
+                TextUtil.FontColor.RGB_FONT_COLOR_BLACK, 0.0);
+        addSummonContentParagraph(placeholder, leaderText, scriptureFontSize,
+                TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
 
-        // 第二段
-        paragraph = placeholder.addNewTextParagraph();
-        paragraph.addNewTextRun().setText("\n");
-        scriptureTextRun = paragraph.addNewTextRun();
-        scriptureTextRun.setText("回应:  ");
-        scriptureTextRun.setFontSize(scriptureFontSize);
-        TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
-        // 回应内容使用蓝色、粗体和下划线，与原有宣召版式保持一致。
-        scriptureTextRun = paragraph.addNewTextRun();
-        scriptureTextRun.setText(responseText);
-        scriptureTextRun.setBold(true);
-        scriptureTextRun.setUnderlined(true);
-        scriptureTextRun.setFontSize(scriptureFontSize);
-        TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
+        // 保留主领与回应之间的视觉间隔，但不再依赖正文中的换行字符控制布局。
+        addSummonLabelParagraph(placeholder, "回应:  ", scriptureFontSize,
+                TextUtil.FontColor.RGB_FONT_COLOR_BLUE, 12.0);
+        addSummonContentParagraph(placeholder, responseText, scriptureFontSize,
+                TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
 
         logger.info("宣召幻灯片制作完成");
+    }
+
+    /** 添加主领或回应标签行，标签保持普通字重。 */
+    private void addSummonLabelParagraph(XSLFTextShape placeholder,
+                                         String label,
+                                         double fontSize,
+                                         int[] fontColor,
+                                         double spaceBefore) {
+        XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
+        paragraph.setLineSpacing(SUMMON_LINE_SPACING);
+        paragraph.setSpaceBefore(spaceBefore);
+        useCustomLanguage(paragraph);
+        XSLFTextRun textRun = paragraph.addNewTextRun();
+        textRun.setText(label);
+        textRun.setFontSize(fontSize);
+        textRun.setBold(false);
+        TextUtil.setScriptureFontColor(textRun, fontColor);
+    }
+
+    /** 添加宣召正文，正文加粗且仅首行向右缩进。 */
+    private void addSummonContentParagraph(XSLFTextShape placeholder,
+                                           String content,
+                                           double fontSize,
+                                           int[] fontColor) {
+        XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
+        paragraph.setLineSpacing(SUMMON_LINE_SPACING);
+        // 只缩进首行，换行后的经文回到正文区域左侧，符合宣召版式。
+        paragraph.setLeftMargin(0.0);
+        paragraph.setIndent(SUMMON_CONTENT_FIRST_LINE_INDENT);
+        useCustomLanguage(paragraph);
+        XSLFTextRun textRun = paragraph.addNewTextRun();
+        textRun.setText(content);
+        textRun.setFontSize(fontSize);
+        textRun.setBold(true);
+        textRun.setUnderlined(false);
+        TextUtil.setScriptureFontColor(textRun, fontColor);
     }
 
     /**
