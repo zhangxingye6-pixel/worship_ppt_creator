@@ -25,6 +25,11 @@ public class SummonStep extends AbstractWorshipStep {
     /** PowerPoint 使用百分比表示段落行距，120 表示 1.2 倍行距。 */
     private static final double SUMMON_LINE_SPACING = 120.0;
 
+    /** 宣召角色标签使用单倍行距，避免标签行占用过多垂直空间。 */
+    private static final double SUMMON_LABEL_LINE_SPACING = 100.0;
+    /** 宣召回应标题使用 1.5 倍行距，与下方回应内容保持更清晰的层次。 */
+    private static final double SUMMON_RESPONSE_LABEL_LINE_SPACING = 150.0;
+
     /** 宣召正文首行缩进约两个中文字符，与约 8 个半角空格的视觉宽度相当。 */
     private static final double SUMMON_CONTENT_FIRST_LINE_INDENT = 72.0;
 
@@ -99,13 +104,13 @@ public class SummonStep extends AbstractWorshipStep {
         placeholder.clearText();
         // 标签独占一行，正文另起一行并统一缩进，避免正文换行后回到标签左侧。
         addSummonLabelParagraph(placeholder, "主领:  ", scriptureFontSize,
-                TextUtil.FontColor.RGB_FONT_COLOR_BLACK, 0.0);
+                TextUtil.FontColor.RGB_FONT_COLOR_BLACK, 0.0, SUMMON_LABEL_LINE_SPACING);
         addSummonContentParagraph(placeholder, leaderText, scriptureFontSize,
                 TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
 
         // 保留主领与回应之间的视觉间隔，但不再依赖正文中的换行字符控制布局。
         addSummonLabelParagraph(placeholder, "回应:  ", scriptureFontSize,
-                TextUtil.FontColor.RGB_FONT_COLOR_BLUE, 12.0);
+                TextUtil.FontColor.RGB_FONT_COLOR_BLUE, 12.0, SUMMON_RESPONSE_LABEL_LINE_SPACING);
         addSummonContentParagraph(placeholder, responseText, scriptureFontSize,
                 TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
 
@@ -117,9 +122,10 @@ public class SummonStep extends AbstractWorshipStep {
                                          String label,
                                          double fontSize,
                                          int[] fontColor,
-                                         double spaceBefore) {
+                                         double spaceBefore,
+                                         double lineSpacing) {
         XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
-        paragraph.setLineSpacing(SUMMON_LINE_SPACING);
+        paragraph.setLineSpacing(lineSpacing);
         paragraph.setSpaceBefore(spaceBefore);
         useCustomLanguage(paragraph);
         XSLFTextRun textRun = paragraph.addNewTextRun();

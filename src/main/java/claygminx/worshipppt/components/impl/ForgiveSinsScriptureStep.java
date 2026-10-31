@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.poi.xslf.usermodel.*;
 
-import java.awt.geom.Rectangle2D;
 import java.util.List;
 
 /**
@@ -28,8 +27,12 @@ public class ForgiveSinsScriptureStep extends AbstractWorshipStep {
 
     // 文本常量
     private final static double DEFAULT_LINE_SPACING = 120.0;
-    /** 在主领经文与下方“会众”区域之间额外保留的视觉间距，单位为磅。 */
-    private static final double CONGREGATION_EXTRA_GAP = 36.0;
+    /** 角色标签使用单倍行距，避免标签本身占用过多垂直空间。 */
+    private static final double LABEL_LINE_SPACING = 100.0;
+    /** 会众标题使用 1.5 倍行距，增加与主领正文之间的视觉分隔。 */
+    private static final double CONGREGATION_LABEL_LINE_SPACING = 150.0;
+    /** 主领与会众两个段落之间的额外间距，单位为磅。 */
+    private static final double CONGREGATION_SPACE_BEFORE = 12.0;
 
     public ForgiveSinsScriptureStep(XMLSlideShow ppt, String layout, ScriptureService scriptureService, String scriptureNumber) {
         super(ppt, layout);
@@ -61,113 +64,70 @@ public class ForgiveSinsScriptureStep extends AbstractWorshipStep {
         TextUtil.setScriptureFontColor(titleTextRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
 
 
-        // 赦罪经文
+        // 赦罪经文和会众回应统一写入同一个正文占位符，交由 PowerPoint 统一排版。
         placeholder = TextUtil.getPlaceholderSafely(slide, 1, getLayout(), "正文部分");
-        List<XSLFTextParagraph> paragraphs = placeholder.getTextParagraphs();
-        // 获取行距配置
+        placeholder.clearText();
         double lineSpacing = SystemConfig.getUserConfigOrDefault(Dict.PPTProperty.FORGIVE_SINS_SCRIPTURE_LINE_SPACING, DEFAULT_LINE_SPACING);
-        // 遍历占位符中的所有文本段落
-        boolean breakTag = false;
-        for (XSLFTextParagraph paragraph : paragraphs) {
-            List<XSLFTextRun> textRuns = paragraph.getTextRuns();
-            // 遍历当前文本段落中的所有文本段
-            for (XSLFTextRun textRun : textRuns) {
-                String rawText = textRun.getRawText();
-                logger.info("赦罪：读取到文本段" + rawText);
-                if (rawText != null && rawText.contains("主领：")){
-                    TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_RED);
-                    textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
-                    textRun.setBold(true);
-                }
-                if (rawText != null && rawText.contains(getCustomPlaceholder())) {
-
-                    textRun.setText(rawText.replace(getCustomPlaceholder(), titleAndScripture[1]));
-                    textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
-                    textRun.setBold(true);
-                    TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
-                    paragraph.setLineSpacing(lineSpacing);
-                    useCustomLanguage(paragraph);
-                    breakTag = true;
-                }
-//                if (rawText != null && rawText.contains("会众：")){
-//                    textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
-//                    TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
-//                    textRun.setBold(true);
-//                    if (breakTag) break;
-//                }
-                if (rawText != null && rawText.contains("感谢主赦免我们的罪")){
-                    textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
-                    TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
-                }
-            }
-        }
-        // 正文占位符的高度会随经文内容变化，下面的两个独立文本框需要作为整体同步下移。
-        moveForgivenessFooter(slide, placeholder);
+        addForgivenessLabelParagraph(placeholder, "主领:  ",
+                TextUtil.FontColor.RGB_FONT_COLOR_BLACK, 0.0, LABEL_LINE_SPACING);
+        addForgivenessContentParagraph(placeholder, titleAndScripture[1], lineSpacing,
+                TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
+        addForgivenessLabelParagraph(placeholder, "会众:  ",
+                TextUtil.FontColor.RGB_FONT_COLOR_BLUE, CONGREGATION_SPACE_BEFORE,
+                CONGREGATION_LABEL_LINE_SPACING);
+        addForgivenessContentParagraph(placeholder, "感谢主赦免我们的罪", lineSpacing,
+                TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
         logger.info("认罪经文幻灯片制作完成");
     }
 
     /**
-     * 根据赦罪经文的实际渲染高度移动“会众”和底部提示文本框。
+     * 添加赦罪阶段的角色标签。
      *
-     * <p>PowerPoint 不会自动让独立文本框跟随占位符变化，因此这里保留模板中
-     * 原有的间距和两个文本框之间的相对位置，只调整整个底部文本框组的 Y 坐标。</p>
-     *
-     * @param slide       当前赦罪幻灯片
-     * @param placeholder 已填充经文的正文占位符
+     * @param placeholder 正文占位符
+     * @param label       角色标签
+     * @param fontColor   标签颜色
+     * @param spaceBefore 段前间距
      */
-    private void moveForgivenessFooter(XSLFSlide slide, XSLFTextShape placeholder) {
-        XSLFTextShape congregationShape = null;
-        XSLFTextShape reminderShape = null;
-        double footerTop = Double.MAX_VALUE;
-
-        for (XSLFShape shape : slide.getShapes()) {
-            if (!(shape instanceof XSLFTextShape textShape) || textShape == placeholder) {
-                continue;
-            }
-            String text = textShape.getText();
-            if (text == null) {
-                continue;
-            }
-            if (text.contains("会众：")) {
-                congregationShape = textShape;
-            } else if (text.contains("感谢主赦免我们的罪")) {
-                reminderShape = textShape;
-            }
-            if (text.contains("会众：") || text.contains("感谢主赦免我们的罪")) {
-                footerTop = Math.min(footerTop, textShape.getAnchor().getY());
-            }
-        }
-
-        if (congregationShape == null || reminderShape == null || footerTop == Double.MAX_VALUE) {
-            logger.warn("赦罪版式缺少“会众：”或底部提示文本框，跳过底部文本框位置调整");
-            return;
-        }
-
-        Rectangle2D placeholderAnchor = placeholder.getAnchor();
-        // POI 的文本高度和图形坐标均以磅为单位，计算时不能再次换算为 EMU。
-        double placeholderTextHeight = placeholder.getTopInset() + placeholder.getTextHeight();
-        if (placeholderTextHeight <= 0) {
-            placeholderTextHeight = placeholderAnchor.getHeight();
-        }
-
-        // 保留正文占位符底部到下方文本框组顶部的模板间距。
-        double templateGap = footerTop - (placeholderAnchor.getY() + placeholderAnchor.getHeight());
-        double targetFooterTop = placeholderAnchor.getY() + placeholderTextHeight + templateGap
-                + CONGREGATION_EXTRA_GAP;
-        double deltaY = targetFooterTop - footerTop;
-
-        moveShapeVertically(congregationShape, deltaY);
-        moveShapeVertically(reminderShape, deltaY);
-        logger.debug("赦罪底部文本框整体移动 {} EMU", deltaY);
+    private void addForgivenessLabelParagraph(XSLFTextShape placeholder,
+                                              String label,
+                                              int[] fontColor,
+                                              double spaceBefore,
+                                              double lineSpacing) {
+        XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
+        paragraph.setLineSpacing(lineSpacing);
+        paragraph.setSpaceBefore(spaceBefore);
+        useCustomLanguage(paragraph);
+        XSLFTextRun textRun = paragraph.addNewTextRun();
+        textRun.setText(label);
+        textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
+        textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+        textRun.setBold(false);
+        TextUtil.setScriptureFontColor(textRun, fontColor);
     }
 
-    /** 仅调整文本框的纵坐标，保持宽度、高度及两个文本框之间的相对位置。 */
-    private void moveShapeVertically(XSLFTextShape shape, double deltaY) {
-        Rectangle2D anchor = shape.getAnchor();
-        shape.setAnchor(new Rectangle2D.Double(
-                anchor.getX(),
-                anchor.getY() + deltaY,
-                anchor.getWidth(),
-                anchor.getHeight()));
+    /**
+     * 添加赦罪阶段的正文。正文使用固定字号，避免 PowerPoint 根据文本框高度
+     * 自动缩小文字；占位符本身负责处理换行和超出内容的排版。
+     *
+     * @param placeholder 正文占位符
+     * @param content     要显示的正文
+     * @param lineSpacing 正文行距
+     * @param fontColor   正文颜色
+     */
+    private void addForgivenessContentParagraph(XSLFTextShape placeholder,
+                                                String content,
+                                                double lineSpacing,
+                                                int[] fontColor) {
+        XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
+        paragraph.setLineSpacing(lineSpacing);
+        paragraph.setLeftMargin(0.0);
+        paragraph.setIndent(72.0);
+        useCustomLanguage(paragraph);
+        XSLFTextRun textRun = paragraph.addNewTextRun();
+        textRun.setText(content == null ? "" : content.trim());
+        textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
+        textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+        textRun.setBold(true);
+        TextUtil.setScriptureFontColor(textRun, fontColor);
     }
 }

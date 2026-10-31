@@ -59,6 +59,8 @@ public class ConfessScriptureStep extends AbstractWorshipStep {
             paragraph.setLineSpacing(120.0);
             for (XSLFTextRun textRun : paragraph.getTextRuns()) {
                 textRun.setBold(true);
+                // 颜色逻辑统一 会众即使在单独一页中也使用蓝色文本
+                TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
             }
         }
     }
