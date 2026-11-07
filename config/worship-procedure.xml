@@ -55,6 +55,7 @@
         <worship-step name="新朋友" layout="新朋友" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="家事报告" layout="家事报告" class="claygminx.worshipppt.components.impl.FamilyReportStep" data="familyReports"/>
         <worship-step name="团契学习" layout="团契学习" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="证道回应" layout="证道回应" class="claygminx.worshipppt.components.impl.PreachResponseStep" data="preachResponseContents" if="preachResponseEnabled"/>
     </model>
     <model name="圣餐">
         <worship-step name="封面" layout="封面" class="claygminx.worshipppt.components.impl.CoverStep" data="cover"/>
@@ -129,6 +130,7 @@
         <worship-step name="新朋友" layout="新朋友" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="家事报告" layout="家事报告" class="claygminx.worshipppt.components.impl.FamilyReportStep" data="familyReports"/>
         <worship-step name="团契学习" layout="团契学习" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="证道回应" layout="证道回应" class="claygminx.worshipppt.components.impl.PreachResponseStep" data="preachResponseContents" if="preachResponseEnabled"/>
     </model>
     <model name="入会">
         <worship-step name="封面" layout="封面" class="claygminx.worshipppt.components.impl.CoverStep" data="cover"/>
@@ -203,5 +205,6 @@
         <worship-step name="新朋友" layout="新朋友" class="claygminx.worshipppt.components.impl.FixedStep"/>
         <worship-step name="家事报告" layout="家事报告" class="claygminx.worshipppt.components.impl.FamilyReportStep" data="familyReports"/>
         <worship-step name="团契学习" layout="团契学习" class="claygminx.worshipppt.components.impl.FixedStep"/>
+        <worship-step name="证道回应" layout="证道回应" class="claygminx.worshipppt.components.impl.PreachResponseStep" data="preachResponseContents" if="preachResponseEnabled"/>
     </model>
 </worship>

@@ -5,10 +5,13 @@ import claygminx.worshipppt.exception.PPTLayoutException;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.apache.poi.xslf.usermodel.XSLFTextRun;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
+import org.apache.poi.sl.usermodel.Placeholder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 文本类工具
@@ -93,6 +96,45 @@ public class TextUtil {
         } catch (Exception e) {
             throw new PPTLayoutException("PPT母版-" + layout + "-" + placeholderDesc + "缺少必要的占位符（索引" + index + "），请添加后重新制作", e);
         }
+    }
+
+    /**
+     * 获取布局中的唯一正文占位符。
+     *
+     * <p>正文占位符只接受 PowerPoint 的 BODY 或 CONTENT 类型。标题占位符、
+     * 普通文本框和装饰文本框不会被当作正文目标，从而避免渲染内容覆盖母版标题。</p>
+     *
+     * @param slide 幻灯片对象
+     * @param layout 母版布局名称
+     * @param placeholderDesc 占位符描述，用于错误提示
+     * @return 唯一正文占位符
+     * @throws PPTLayoutException 未找到或找到多个正文占位符时抛出
+     */
+    public static XSLFTextShape getUniqueContentPlaceholder(XSLFSlide slide,
+                                                              String layout,
+                                                              String placeholderDesc)
+            throws PPTLayoutException {
+        if (slide == null) {
+            throw new PPTLayoutException("PPT母版-" + layout + "-" + placeholderDesc + "无法读取幻灯片，请检查模板文件");
+        }
+
+        List<XSLFTextShape> contentPlaceholders = new ArrayList<>();
+        for (XSLFTextShape placeholder : slide.getPlaceholders()) {
+            if (placeholder == null) {
+                continue;
+            }
+            Placeholder type = placeholder.getTextType();
+            if (type == Placeholder.BODY || type == Placeholder.CONTENT) {
+                contentPlaceholders.add(placeholder);
+            }
+        }
+
+        if (contentPlaceholders.size() != 1) {
+            throw new PPTLayoutException("PPT母版-" + layout + "-" + placeholderDesc
+                    + "需要且只能有一个正文占位符（类型为BODY或CONTENT），当前找到"
+                    + contentPlaceholders.size() + "个，请在母版中添加或调整后重新制作");
+        }
+        return contentPlaceholders.get(0);
     }
 
 }

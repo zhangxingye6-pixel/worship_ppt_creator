@@ -28,9 +28,6 @@ public class PreachScriptureStep extends AbstractWorshipStep {
     private static final double SCRIPTURE_LINE_SPACING = 110.0;
     /** format3 经文行以【书卷章:节】开头；编号单独渲染，保持普通字重。 */
     private static final Pattern SCRIPTURE_REFERENCE = Pattern.compile("^【([^】]+)】(.*)$");
-    /** 续行缩进使用编号前缀实际估算宽度的 95%，与读经版式保持一致。 */
-    private static final double SCRIPTURE_HANGING_INDENT_RATIO = 0.95;
-
     // 经文服务对象
     private final ScriptureService scriptureService;
 
@@ -121,6 +118,7 @@ public class PreachScriptureStep extends AbstractWorshipStep {
         titleTextRun.setFontSize(SystemConfig.getUserConfigOrDefault(
                 Dict.PPTProperty.GENERAL_TITLE_FONT_SIZE,
                 AbstractWorshipStep.DEFAULT_TITLE_FONT_SIZE));
+        setDefaultTitleLineSpacing(titleTextRun);
         TextUtil.setScriptureFontColor(titleTextRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
 
         XSLFTextShape contentPlaceholder = TextUtil.getPlaceholderSafely(slide, 1, getLayout(), "正文部分");
@@ -142,8 +140,10 @@ public class PreachScriptureStep extends AbstractWorshipStep {
         if (matcher.matches()) {
             String reference = "[" + matcher.group(1) + "]";
             String scripturePrefix = reference + " ";
-            double hangingIndent = estimateTextWidth(scripturePrefix)
-                    * SCRIPTURE_HANGING_INDENT_RATIO;
+            double hangingIndent = measureTextWidth(
+                    scripturePrefix,
+                    getScriptureFontSize(),
+                    AbstractWorshipStep.DEFAULT_FONT_FAMILY);
             paragraph.setLeftMargin(hangingIndent);
             paragraph.setIndent(-hangingIndent);
             referenceRun.setText(reference);
@@ -167,26 +167,11 @@ public class PreachScriptureStep extends AbstractWorshipStep {
         return paragraph;
     }
 
-    /**
-     * 按中英文字符的大致显示宽度估算章节编号前缀，包含正文前的空格。
-     * 全角字符按一个字号宽度计算，半角字符按半个字号宽度计算，空格按四分之一计算。
-     */
-    private double estimateTextWidth(String text) {
-        double fontSize = SystemConfig.getUserConfigOrDefault(
+    /** 获取证道经文使用的字号，用于测量章节前缀的实际宽度。 */
+    private double getScriptureFontSize() {
+        return SystemConfig.getUserConfigOrDefault(
                 Dict.PPTProperty.GENERAL_SCRIPTURE_FONT_SIZE,
                 AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
-        double widthUnits = 0.0;
-        for (int i = 0; i < text.length(); i++) {
-            char character = text.charAt(i);
-            if (character == ' ') {
-                widthUnits += 0.25;
-            } else if (character <= 0x00FF) {
-                widthUnits += 0.5;
-            } else {
-                widthUnits += 1.0;
-            }
-        }
-        return widthUnits * fontSize;
     }
 
     /** 使用占位符实际排版高度判断是否超出可用正文区域。 */

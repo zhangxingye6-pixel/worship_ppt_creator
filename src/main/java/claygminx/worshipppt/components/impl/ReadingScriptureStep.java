@@ -40,8 +40,6 @@ public class ReadingScriptureStep extends AbstractWorshipStep {
     private static final double SCRIPTURE_LINE_SPACING = 120.0;
     /** 主领与下一段会众内容之间的段后间距，单位为磅。 */
     private static final double ROLE_SECTION_SPACE_AFTER = 12.0;
-    /** 续行缩进使用前缀实际估算宽度的 92%，并保留角色与经文正文的视觉对齐。 */
-    private static final double SCRIPTURE_HANGING_INDENT_RATIO = 0.92;
     private final static Pattern SCRIPTURE_REFERENCE = Pattern.compile("^【(.+?)(\\d+):(\\d+)】(.*)$");
     /** 读经模板输出的角色标签和章节引用，例如“主领:[诗31:1]  经文正文”。 */
     private static final Pattern FORMATTED_SCRIPTURE = Pattern.compile("^(主领:|会众:|合　:)(\\[[^\\]]*\\])  (.*)$");
@@ -136,7 +134,11 @@ public class ReadingScriptureStep extends AbstractWorshipStep {
                     slide = ppt.createSlide(layout);
                     placeholder = TextUtil.getPlaceholderSafely(slide, 0, getLayout(), "标题部分");
                     XSLFTextRun textRun = TextUtil.clearAndCreateTextRun(placeholder);
-                    textRun.setFontSize(AbstractWorshipStep.DEFAULT_TITLE_FONT_SIZE);
+                    // 经文标题优先使用统一配置；未配置时回退到父类默认字号。
+                    textRun.setFontSize(SystemConfig.getUserConfigOrDefault(
+                            Dict.PPTProperty.GENERAL_TITLE_FONT_SIZE,
+                            AbstractWorshipStep.DEFAULT_TITLE_FONT_SIZE));
+                    setDefaultTitleLineSpacing(textRun);
                     textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
                     TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
                     textRun.setText(readingTitle);
@@ -185,10 +187,12 @@ public class ReadingScriptureStep extends AbstractWorshipStep {
                 ? TextUtil.FontColor.RGB_FONT_COLOR_BLACK
                 : TextUtil.FontColor.RGB_FONT_COLOR_RED;
 
-        // 正文前有一个空格；悬挂缩进宽度按角色、编号和这个空格一并计算。
+        // 正文前有一个空格；悬挂缩进按当前字体实际测量角色、编号和空格的宽度。
         String scripturePrefix = role + matcher.group(2) + " ";
-        double hangingIndent = estimateTextWidth(scripturePrefix, scriptureFontSize)
-                * SCRIPTURE_HANGING_INDENT_RATIO;
+        double hangingIndent = measureTextWidth(
+                scripturePrefix,
+                scriptureFontSize,
+                AbstractWorshipStep.DEFAULT_FONT_FAMILY);
         paragraph.setTextAlign(TextParagraph.TextAlign.LEFT);
         paragraph.setLeftMargin(hangingIndent);
         paragraph.setIndent(-hangingIndent);
@@ -214,25 +218,6 @@ public class ReadingScriptureStep extends AbstractWorshipStep {
         textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
         textRun.setBold(bold);
         TextUtil.setScriptureFontColor(textRun, fontColor);
-    }
-
-    /**
-     * 按中英文字符的大致显示宽度估算前缀磅值，用于让经文续行对齐正文起点。
-     * 全角字符按一个字号宽度计算，半角字符按半个字号宽度计算，空格按四分之一计算。
-     */
-    private double estimateTextWidth(String text, double fontSize) {
-        double widthUnits = 0.0;
-        for (int i = 0; i < text.length(); i++) {
-            char character = text.charAt(i);
-            if (character == ' ') {
-                widthUnits += 0.25;
-            } else if (character <= 0x00FF) {
-                widthUnits += 0.5;
-            } else {
-                widthUnits += 1.0;
-            }
-        }
-        return widthUnits * fontSize;
     }
 
     /**

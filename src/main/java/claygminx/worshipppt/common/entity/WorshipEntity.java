@@ -48,6 +48,12 @@ public class WorshipEntity implements Serializable {
      */
     private transient List<String> publicPrayContents;
 
+    /** 证道回应开关，仅用于当前生成任务，不写入敬拜配置缓存。 */
+    private transient boolean preachResponseEnabled;
+
+    /** 证道回应事项，仅用于当前生成任务，不写入敬拜配置缓存。 */
+    private transient List<String> preachResponseContents;
+
     /**
      * 圣餐
      */
@@ -110,6 +116,22 @@ public class WorshipEntity implements Serializable {
 
     public void setPublicPrayContents(List<String> publicPrayContents) {
         this.publicPrayContents = publicPrayContents;
+    }
+
+    public boolean isPreachResponseEnabled() {
+        return preachResponseEnabled;
+    }
+
+    public void setPreachResponseEnabled(boolean preachResponseEnabled) {
+        this.preachResponseEnabled = preachResponseEnabled;
+    }
+
+    public List<String> getPreachResponseContents() {
+        return preachResponseContents;
+    }
+
+    public void setPreachResponseContents(List<String> preachResponseContents) {
+        this.preachResponseContents = preachResponseContents;
     }
 
     public HolyCommunionEntity getHolyCommunion() {

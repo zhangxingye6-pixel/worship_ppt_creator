@@ -62,6 +62,8 @@ public class WorshipFormServiceImpl implements WorshipFormService {
     private List<JLabel> readingScriptureLabelList;
     private Map<String, JTextField> declarationTextFieldMap;
     private Map<String, JTextField> preachTextFieldMap;
+    private ButtonGroup preachResponseGroup;
+    private JTextArea preachResponseTextArea;
     private Map<String, JTextField> holyCommunionTextFieldMap;
     private List<JTextField> familyReportsTextFieldList;
     /** 公祷事项多行输入框，仅在当前 GUI 会话中保留，不写入敬拜配置缓存。 */
@@ -74,7 +76,8 @@ public class WorshipFormServiceImpl implements WorshipFormService {
     public final static int TABLE_HEADER_HEIGHT = 30;
     public final static int TABLE_ROW_HEIGHT = 36;
     public final static int TEXT_FIELD_HEIGHT = 30;
-    public final static int REGULAR_TABLE_LEFT_WIDTH = 45;
+    /** 常规标签列宽度，确保四字标签（如“教会名称”“回应环节”）完整显示。 */
+    public final static int REGULAR_TABLE_LEFT_WIDTH = 72;
     public final static int REGULAR_TABLE_RIGHT_WIDTH = 400;
     /** 宣召内部标签列宽度，比普通标签列更窄，用于收紧层级布局。 */
     public final static int SUMMON_LABEL_WIDTH = 45;
@@ -91,6 +94,12 @@ public class WorshipFormServiceImpl implements WorshipFormService {
     public final static int PADDING_LEFT = 6;
     public final static int V_SCROLL_BAR_SPEED = 20;
     public final static int ROW_INDEX_OFFSET = 2;
+    /**
+     * 读经输入行前固定存在的组件数量：经文面板标题、宣召、公祷经文和公祷事项。
+     *
+     * <p>该值同时用于 Swing 组件索引与读经列表索引之间的转换，避免动态增删读经行时错位。</p>
+     */
+    public final static int READING_SCRIPTURE_ROW_OFFSET = 4;
 
     // 线程数量
     private final static int THREAD_COUNT = 3;
@@ -146,7 +155,6 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         addWorshipModelPanel(rootBox);
         addCoverPanel(rootBox);
         addAllPoetryAlbumPanel(rootBox);
-        addPublicPrayPanel(rootBox);
         addScripturePanel(rootBox);
         addDeclarationPanel(rootBox);
         addPreachPanel(rootBox);
@@ -487,6 +495,8 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         JTextField publicPrayTextField = addRegularTableInputRow(tableBox, ScriptureContentKey.PUBLIC_PRAY);
         scriptureContentTextFieldMap.put(ScriptureContentKey.PUBLIC_PRAY, publicPrayTextField);
 
+        addPublicPrayPanel(tableBox);
+
         readingScriptureTextFieldList = new ArrayList<>();
         readingScriptureLabelList = new ArrayList<>();
         addReadingScriptureRow(tableBox, 0);
@@ -595,16 +605,16 @@ public class WorshipFormServiceImpl implements WorshipFormService {
     /**
      * 添加公祷事项面板。
      *
-     * <p>该面板位于经文面板之前，输入内容只在当前生成任务中使用，不从缓存恢复。</p>
+     * <p>该面板位于公祷经文与读经输入之间，输入内容只在当前生成任务中使用，不从缓存恢复。</p>
      *
-     * @param rootBox 根容器
+     * @param parentBox 当前经文面板容器
      */
-    private void addPublicPrayPanel(Box rootBox) {
+    private void addPublicPrayPanel(Box parentBox) {
         Box tableBox = Box.createVerticalBox();
-        addTableTitle(tableBox, InputSection.PUBLIC_PRAY);
+        // 公祷事项与上方的公祷经文属于同一经文分组，不再重复显示独立的小标题。
         tableBox.add(Box.createVerticalStrut(3));
 
-        publicPrayContentTextArea = new PlaceholderTextArea("无需添加序号，每行输入一项公祷事项");
+        publicPrayContentTextArea = new PlaceholderTextArea("有无序号皆可, 程序会格式化, 只需保证每一项仅有一次换行");
         publicPrayContentTextArea.setLineWrap(true);
         publicPrayContentTextArea.setWrapStyleWord(true);
         publicPrayContentTextArea.setRows(5);
@@ -639,7 +649,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         JPanel panel = new JPanel();
         panel.setName(InputSection.PUBLIC_PRAY);
         panel.add(tableBox);
-        rootBox.add(panel);
+        parentBox.add(panel);
     }
 
     /** 添加宣信方式单选项，并将当前选择同步到待保存字段。 */
@@ -774,9 +784,69 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             }
         }
 
+        addPreachResponseInput(tableBox);
+
         JPanel panel = new JPanel();
         panel.add(tableBox);
         rootBox.add(panel);
+    }
+
+    /**
+     * 添加证道回应选项及临时输入框。
+     *
+     * <p>回应内容仅用于本次 PPT 生成，不从旧配置缓存恢复。</p>
+     *
+     * @param tableBox 证道面板容器
+     */
+    private void addPreachResponseInput(Box tableBox) {
+        Box optionRow = Box.createHorizontalBox();
+        JLabel optionLabel = addRegularTableInputLabel(optionRow, "回应环节");
+        JRadioButton noResponseRadio = new JRadioButton("无", true);
+        JRadioButton responseRadio = new JRadioButton("有");
+        noResponseRadio.setActionCommand("无");
+        responseRadio.setActionCommand("有");
+        preachResponseGroup = new ButtonGroup();
+        preachResponseGroup.add(noResponseRadio);
+        preachResponseGroup.add(responseRadio);
+        optionRow.add(noResponseRadio);
+        optionRow.add(Box.createHorizontalStrut(12));
+        optionRow.add(responseRadio);
+        optionRow.add(Box.createHorizontalGlue());
+        tableBox.add(optionRow);
+
+        preachResponseTextArea = new PlaceholderTextArea("无需添加序号，每行输入一项证道回应");
+        preachResponseTextArea.setLineWrap(true);
+        preachResponseTextArea.setWrapStyleWord(true);
+        preachResponseTextArea.setRows(4);
+        preachResponseTextArea.setFont(UIManager.getFont("TextField.font"));
+        preachResponseTextArea.setToolTipText("每行输入一项，程序会统一添加编号");
+        preachResponseTextArea.setBorder(UIManager.getBorder("TextField.border"));
+
+        JScrollPane scrollPane = new JScrollPane(preachResponseTextArea);
+        Dimension inputSize = new Dimension(REGULAR_TABLE_RIGHT_WIDTH - PADDING_LEFT, 100);
+        scrollPane.setPreferredSize(inputSize);
+        scrollPane.setMinimumSize(inputSize);
+        scrollPane.setMaximumSize(inputSize);
+
+        Box inputRow = Box.createHorizontalBox();
+        JLabel contentLabel = addRegularTableInputLabel(inputRow, "内容");
+        contentLabel.setLabelFor(preachResponseTextArea);
+        inputRow.add(Box.createHorizontalStrut(PADDING_LEFT));
+        inputRow.add(scrollPane);
+        inputRow.add(Box.createHorizontalGlue());
+        inputRow.setVisible(false);
+        tableBox.add(inputRow);
+
+        responseRadio.addActionListener(event -> {
+            inputRow.setVisible(true);
+            tableBox.revalidate();
+            tableBox.repaint();
+        });
+        noResponseRadio.addActionListener(event -> {
+            inputRow.setVisible(false);
+            tableBox.revalidate();
+            tableBox.repaint();
+        });
     }
 
     /**
@@ -1183,6 +1253,16 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         preach.setTitle(preachTitleTextField.getText().trim());
         preach.setScriptureNumber(preachScriptureTextField.getText().trim());
         worshipEntity.setPreach(preach);
+
+        boolean hasResponse = preachResponseGroup.getSelection() != null
+                && "有".equals(preachResponseGroup.getSelection().getActionCommand());
+        List<String> responseContents = PreachResponseStep.normalizeItems(preachResponseTextArea.getText());
+        if (hasResponse && responseContents.isEmpty()) {
+            warn("请输入证道回应内容");
+            return false;
+        }
+        worshipEntity.setPreachResponseEnabled(hasResponse);
+        worshipEntity.setPreachResponseContents(hasResponse ? responseContents : null);
 
         return true;
     }
@@ -1679,7 +1759,9 @@ public class WorshipFormServiceImpl implements WorshipFormService {
      */
     private void addReadingScriptureRow(Box tableBox, int index) {
         Box rowBox = Box.createHorizontalBox();
-        int rowIndex = Math.min(index + 3, tableBox.getComponentCount());
+        int rowIndex = Math.min(
+                index + READING_SCRIPTURE_ROW_OFFSET,
+                tableBox.getComponentCount());
         tableBox.add(rowBox, rowIndex);
 
         JLabel label = addRegularTableInputLabel(
@@ -1707,7 +1789,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         insertButton.addActionListener(event -> {
             int currentIndex = getIndexOfRowBox(tableBox, rowBox);
             if (currentIndex != -1) {
-                int readingIndex = currentIndex - 3;
+                int readingIndex = currentIndex - READING_SCRIPTURE_ROW_OFFSET;
                 addReadingScriptureRow(tableBox, readingIndex + 1);
                 tableBox.revalidate();
                 tableBox.repaint();
@@ -1724,7 +1806,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             }
             int currentIndex = getIndexOfRowBox(tableBox, rowBox);
             if (currentIndex != -1) {
-                int readingIndex = currentIndex - 3;
+                int readingIndex = currentIndex - READING_SCRIPTURE_ROW_OFFSET;
                 readingScriptureTextFieldList.remove(readingIndex);
                 readingScriptureLabelList.remove(readingIndex);
                 tableBox.remove(rowBox);
@@ -1804,7 +1886,8 @@ public class WorshipFormServiceImpl implements WorshipFormService {
      */
     private void addSummonSectionLabel(Box sectionBox, String title) {
         JLabel label = new JLabel(title);
-        leftMiddle(sectionBox, label, REGULAR_TABLE_LEFT_WIDTH);
+        label.setHorizontalAlignment(SwingConstants.RIGHT);
+        rightMiddle(sectionBox, label, REGULAR_TABLE_LEFT_WIDTH);
     }
 
     /**
@@ -1845,7 +1928,8 @@ public class WorshipFormServiceImpl implements WorshipFormService {
      */
     private JLabel addRegularTableInputLabel(Box rowBox, String labelName) {
         JLabel label = new JLabel(labelName);
-        leftMiddle(rowBox, label, REGULAR_TABLE_LEFT_WIDTH);
+        label.setHorizontalAlignment(SwingConstants.RIGHT);
+        rightMiddle(rowBox, label, REGULAR_TABLE_LEFT_WIDTH);
         return label;
     }
 
@@ -2062,6 +2146,28 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         cell.setMaximumSize(new Dimension(width, TABLE_ROW_HEIGHT));
         cell.setLayout(new GridBagLayout());
         cell.setBorder(new EmptyBorder(0, PADDING_LEFT, 0, 0));
+        cell.add(component, gbc);
+        container.add(cell);
+    }
+
+    /**
+     * 在固定宽度的标签列中将组件靠右放置，并保持垂直居中。
+     *
+     * <p>常规输入标签使用该布局，使标签与右侧输入框的关系更紧凑，
+     * 同时不改变输入框所在列的起始位置。</p>
+     */
+    private void rightMiddle(Container container, Component component, int width) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+
+        JPanel cell = new JPanel();
+        cell.setPreferredSize(new Dimension(width, TABLE_ROW_HEIGHT));
+        cell.setMinimumSize(new Dimension(width, TABLE_ROW_HEIGHT));
+        cell.setMaximumSize(new Dimension(width, TABLE_ROW_HEIGHT));
+        cell.setLayout(new GridBagLayout());
+        cell.setBorder(new EmptyBorder(0, PADDING_LEFT, 0, PADDING_LEFT));
         cell.add(component, gbc);
         container.add(cell);
     }
@@ -2498,7 +2604,8 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             super.paintComponent(graphics);
             if (!hasFocus() && getText().isEmpty()) {
                 Graphics2D graphics2D = (Graphics2D) graphics.create();
-                graphics2D.setColor(new Color(185, 185, 185));
+                // 多行输入框的占位提示使用更浅的灰色，避免与正文产生视觉混淆。
+                graphics2D.setColor(new Color(145, 145, 145));
                 graphics2D.setFont(getFont());
 
                 Insets insets = getInsets();

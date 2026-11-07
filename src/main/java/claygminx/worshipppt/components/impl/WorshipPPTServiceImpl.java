@@ -56,6 +56,7 @@ public class WorshipPPTServiceImpl implements WorshipPPTService {
         try (FileInputStream fis = new FileInputStream(file)) {
             // 创建PPT对象
             ppt = new XMLSlideShow(fis);
+            removeTemplateSlides(ppt);
             // 使用自定义语言
             String lang = SystemConfig.getString(Dict.PPTProperty.GENERAL_LANGUAGE);
             if (lang == null || "".equals(lang)) {
@@ -120,6 +121,20 @@ public class WorshipPPTServiceImpl implements WorshipPPTService {
             current = current.getCause();
         }
         return throwable.getClass().getSimpleName();
+    }
+
+    /**
+     * 主母版文件只提供版式定义，实际输出页由敬拜流程逐页创建。
+     * 删除母版中预置的幻灯片，避免空白模板页排在生成的封面之前。
+     */
+    private void removeTemplateSlides(XMLSlideShow ppt) {
+        int slideCount = ppt.getSlides().size();
+        for (int index = slideCount - 1; index >= 0; index--) {
+            ppt.removeSlide(index);
+        }
+        if (slideCount > 0) {
+            logger.debug("已清除主母版中的 {} 张预置幻灯片", slideCount);
+        }
     }
 
     public File getFile() {

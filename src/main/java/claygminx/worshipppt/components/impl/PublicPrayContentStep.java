@@ -23,8 +23,8 @@ public class PublicPrayContentStep extends AbstractWorshipStep {
 
     /** PowerPoint 使用百分比表示段落行距，120 表示1.2倍行距。 */
     private static final double LINE_SPACING = 120.0;
-    /** 续行缩进略小于编号实际宽度，避免第二行视觉上过度右移。 */
-    private static final double CONTINUATION_INDENT_RATIO = 0.;
+    /** 固定续行缩进，按默认字号下单字符编号“1.”的宽度设置。 */
+    private static final double CONTINUATION_INDENT = AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE;
 
     private final List<String> contents;
 
@@ -55,9 +55,8 @@ public class PublicPrayContentStep extends AbstractWorshipStep {
 
                     String numberPrefix = displayIndex + ".";
                     // 使用悬挂缩进：首行保留编号，自动换行后的内容与正文起始位置对齐。
-                    double numberWidth = estimateTextWidth(numberPrefix) * CONTINUATION_INDENT_RATIO;
-                    paragraph.setLeftMargin(numberWidth);
-                    paragraph.setIndent(-numberWidth);
+                    paragraph.setLeftMargin(CONTINUATION_INDENT);
+                    paragraph.setIndent(-CONTINUATION_INDENT);
 
                     XSLFTextRun textRun = paragraph.addNewTextRun();
                     textRun.setText(numberPrefix + content);
@@ -95,16 +94,4 @@ public class PublicPrayContentStep extends AbstractWorshipStep {
         return items;
     }
 
-    /**
-     * 按当前字号估算编号的显示宽度，支持两位数及以上的公祷事项编号。
-     * 半角数字和句号按半个字号估算，便于让续行与正文起始位置对齐。
-     */
-    private double estimateTextWidth(String text) {
-        double widthUnits = 0.0;
-        for (int i = 0; i < text.length(); i++) {
-            char character = text.charAt(i);
-            widthUnits += character <= 0x00FF ? 0.5 : 1.0;
-        }
-        return widthUnits * AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE;
-    }
 }

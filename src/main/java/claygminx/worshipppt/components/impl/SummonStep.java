@@ -92,7 +92,11 @@ public class SummonStep extends AbstractWorshipStep {
         XSLFTextShape placeholder = TextUtil.getPlaceholderSafely(slide, 0, getLayout(), "标题部分");
 
         XSLFTextRun titleTextRun = TextUtil.clearAndCreateTextRun(placeholder);
-        titleTextRun.setFontSize(AbstractWorshipStep.DEFAULT_TITLE_FONT_SIZE);
+        // 经文标题优先使用统一配置；未配置时回退到父类默认字号。
+        titleTextRun.setFontSize(SystemConfig.getUserConfigOrDefault(
+                Dict.PPTProperty.GENERAL_TITLE_FONT_SIZE,
+                AbstractWorshipStep.DEFAULT_TITLE_FONT_SIZE));
+        setDefaultTitleLineSpacing(titleTextRun);
         titleTextRun.setText(resolveTitle());
         titleTextRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
         TextUtil.setScriptureFontColor(titleTextRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);

@@ -88,8 +88,9 @@ public class DeclarationTitleStep extends AbstractWorshipStep {
                         StringBuilder stringBuilder = new StringBuilder();
                         String coverTitle = stringBuilder.append("第").append(chapter).append("章 ").append("《").append(chapterName).append("》").toString();
                         textRun.setText(textRun.getRawText().replace(getCustomPlaceholder(), coverTitle));
-                        textRun.setFontSize(SystemConfig.getUserConfigOrDefault(Dict.PPTProperty.GENERAL_STEP_COVER_FONT_SIZE, AbstractWorshipStep.DEFAULT_STEP_COVER_FONT_SIZE));
+                        textRun.setFontSize(54.0);
                         textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+                        textRun.setBold(false);
                         TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
                         logger.debug("填充了章名称：" + chapterName);
                         break;
@@ -117,10 +118,9 @@ public class DeclarationTitleStep extends AbstractWorshipStep {
             for (XSLFTextRun textRun : paragraph.getTextRuns()) {
                 if (textRun.getRawText().contains(getCustomPlaceholder())) {
                     textRun.setText(textRun.getRawText().replace(getCustomPlaceholder(), title));
-                    textRun.setFontSize(SystemConfig.getUserConfigOrDefault(
-                            Dict.PPTProperty.GENERAL_STEP_COVER_FONT_SIZE,
-                            AbstractWorshipStep.DEFAULT_STEP_COVER_FONT_SIZE));
+                    textRun.setFontSize(54.0);
                     textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+                    textRun.setBold(false);
                     TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
                     logger.debug("填充了信经标题：{}", title);
                     return;
