@@ -23,8 +23,8 @@ public class PublicPrayContentStep extends AbstractWorshipStep {
 
     /** PowerPoint 使用百分比表示段落行距，120 表示1.2倍行距。 */
     private static final double LINE_SPACING = 120.0;
-    /** 固定续行缩进，按默认字号下单字符编号“1.”的宽度设置。 */
-    private static final double CONTINUATION_INDENT = AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE;
+    /** 固定续行缩进，略宽于编号前缀，避免续行相对正文缩进过多。 */
+    private static final double CONTINUATION_INDENT = 29.0;
 
     private final List<String> contents;
 
