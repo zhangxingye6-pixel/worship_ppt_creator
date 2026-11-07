@@ -41,6 +41,7 @@
         <worship-step name="证道" layout="证道摘要" class="claygminx.worshipppt.components.impl.PreachSummaryStep" data="preach"/>
         <worship-step name="证道" layout="证道经文" class="claygminx.worshipppt.components.impl.PreachScriptureStep" data="#scriptureService, preach"/>
         <worship-step name="证道" layout="证道" class="claygminx.worshipppt.components.impl.PreachStep" data="preach"/>
+        <worship-step name="证道内容" layout="证道" class="claygminx.worshipppt.components.impl.PreachContentStep" data="preach, preachContents" if="preachContentsEnabled"/>
         <worship-step name="回应诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌回应上帝', poetryContent.responsePoetryAlbum.poetryList[0].name"/>
         <worship-step name="回应诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.responsePoetryAlbum.poetryList.subList(0, 1)"/>
         <worship-step name="感恩奉献" layout="感恩奉献-林后8:9罗12:1-2" class="claygminx.worshipppt.components.impl.FixedStep" if="thanksgivingScripture == '林后8:9; 罗12:1–2'"/>
@@ -97,6 +98,7 @@
         <worship-step name="证道" layout="证道摘要" class="claygminx.worshipppt.components.impl.PreachSummaryStep" data="preach"/>
         <worship-step name="证道" layout="证道经文" class="claygminx.worshipppt.components.impl.PreachScriptureStep" data="#scriptureService, preach"/>
         <worship-step name="证道" layout="证道" class="claygminx.worshipppt.components.impl.PreachStep" data="preach"/>
+        <worship-step name="证道内容" layout="证道" class="claygminx.worshipppt.components.impl.PreachContentStep" data="preach, preachContents" if="preachContentsEnabled"/>
         <worship-step name="回应诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌回应上帝', poetryContent.responsePoetryAlbum.poetryList[0].name"/>
         <worship-step name="回应诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.responsePoetryAlbum.poetryList.subList(0, 1)"/>
         <worship-step name="圣餐" layout="圣餐-开始" class="claygminx.worshipppt.components.impl.FixedStep"/>
@@ -172,6 +174,7 @@
         <worship-step name="证道" layout="证道摘要" class="claygminx.worshipppt.components.impl.PreachSummaryStep" data="preach"/>
         <worship-step name="证道" layout="证道经文" class="claygminx.worshipppt.components.impl.PreachScriptureStep" data="#scriptureService, preach"/>
         <worship-step name="证道" layout="证道" class="claygminx.worshipppt.components.impl.PreachStep" data="preach"/>
+        <worship-step name="证道内容" layout="证道" class="claygminx.worshipppt.components.impl.PreachContentStep" data="preach, preachContents" if="preachContentsEnabled"/>
         <worship-step name="回应诗歌" layout="诗歌标题" class="claygminx.worshipppt.components.impl.PoetryTitleStep" data="'以诗歌回应上帝', poetryContent.responsePoetryAlbum.poetryList[0].name"/>
         <worship-step name="回应诗歌" layout="常规诗歌" class="claygminx.worshipppt.components.impl.RegularPoetryStep" data="poetryContent.responsePoetryAlbum.poetryList.subList(0, 1)"/>
         <worship-step name="入会" layout="入会诗歌" class="claygminx.worshipppt.components.impl.InitiationStep" data="poetryContent.initiationPoetryAlbum.poetryList"/>

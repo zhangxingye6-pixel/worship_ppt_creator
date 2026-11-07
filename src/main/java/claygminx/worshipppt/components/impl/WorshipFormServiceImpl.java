@@ -53,6 +53,8 @@ public class WorshipFormServiceImpl implements WorshipFormService {
     private javax.swing.Timer declarationTitleAnimationTimer;
     /** 记录主题输入行是否处于展开状态，避免已收起时重复播放收回动画。 */
     private boolean declarationTitleExpanded;
+    private final VisibilityAnimationState preachContentAnimationState = new VisibilityAnimationState();
+    private final VisibilityAnimationState preachResponseAnimationState = new VisibilityAnimationState();
     private String selectedSummonMode;
     private JTextField worshipDateTextField;
     private JTextField churchNameTextField;
@@ -62,6 +64,10 @@ public class WorshipFormServiceImpl implements WorshipFormService {
     private List<JLabel> readingScriptureLabelList;
     private Map<String, JTextField> declarationTextFieldMap;
     private Map<String, JTextField> preachTextFieldMap;
+    private ButtonGroup preachContentGroup;
+    private List<JTextArea> preachContentTextFieldList;
+    private List<JLabel> preachContentPageLabelList;
+    private Box preachContentRowsBox;
     private ButtonGroup preachResponseGroup;
     private JTextArea preachResponseTextArea;
     private Map<String, JTextField> holyCommunionTextFieldMap;
@@ -784,11 +790,132 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             }
         }
 
+        addPreachContentInput(tableBox);
         addPreachResponseInput(tableBox);
 
         JPanel panel = new JPanel();
         panel.add(tableBox);
         rootBox.add(panel);
+    }
+
+    /**
+     * 添加证道内容开关和按页编辑的临时输入框。
+     *
+     * <p>每个输入框对应一张证道版式，内容只保留在当前生成任务中，
+     * 不从敬拜配置缓存读取或写入。</p>
+     *
+     * @param tableBox 证道面板容器
+     */
+    private void addPreachContentInput(Box tableBox) {
+        Box optionRow = Box.createHorizontalBox();
+        addRegularTableInputLabel(optionRow, "证道内容");
+        JRadioButton noContentRadio = new JRadioButton("无", true);
+        JRadioButton contentRadio = new JRadioButton("有");
+        noContentRadio.setActionCommand("无");
+        contentRadio.setActionCommand("有");
+        preachContentGroup = new ButtonGroup();
+        preachContentGroup.add(noContentRadio);
+        preachContentGroup.add(contentRadio);
+        optionRow.add(noContentRadio);
+        optionRow.add(Box.createHorizontalStrut(12));
+        optionRow.add(contentRadio);
+        optionRow.add(Box.createHorizontalGlue());
+        tableBox.add(optionRow);
+
+        preachContentTextFieldList = new ArrayList<>();
+        preachContentPageLabelList = new ArrayList<>();
+        preachContentRowsBox = Box.createVerticalBox();
+        addPreachContentRow(0);
+        setAnimatedRowHeight(preachContentRowsBox, 0);
+        preachContentRowsBox.setVisible(false);
+        tableBox.add(preachContentRowsBox);
+
+        contentRadio.addActionListener(event -> {
+            animateRowVisibility(preachContentAnimationState, preachContentRowsBox, tableBox,
+                    true, preachContentTextFieldList.size() * 100);
+        });
+        noContentRadio.addActionListener(event -> {
+            animateRowVisibility(preachContentAnimationState, preachContentRowsBox, tableBox,
+                    false, preachContentTextFieldList.size() * 100);
+        });
+    }
+
+    /** 添加或插入一条证道正文页，并刷新页码标签。 */
+    private void addPreachContentRow(int index) {
+        Box rowBox = Box.createHorizontalBox();
+        preachContentRowsBox.add(rowBox, index);
+
+        JLabel pageLabel = addRegularTableInputLabel(rowBox, "第" + (index + 1) + "页");
+        int operationWidth = BUTTON_WIDTH * 2 + PADDING_LEFT * 2;
+        int inputWidth = REGULAR_TABLE_RIGHT_WIDTH - operationWidth;
+        JTextArea textField = new JTextArea();
+        textField.setLineWrap(true);
+        textField.setWrapStyleWord(true);
+        textField.setFont(UIManager.getFont("TextField.font"));
+        textField.setBorder(UIManager.getBorder("TextField.border"));
+        JScrollPane scrollPane = new JScrollPane(textField);
+        Dimension inputSize = new Dimension(inputWidth - PADDING_LEFT, 100);
+        scrollPane.setPreferredSize(inputSize);
+        scrollPane.setMinimumSize(inputSize);
+        scrollPane.setMaximumSize(inputSize);
+        leftMiddle(rowBox, scrollPane, inputWidth, 100);
+        pageLabel.setLabelFor(textField);
+        preachContentTextFieldList.add(index, textField);
+        preachContentPageLabelList.add(index, pageLabel);
+
+        JButton insertButton = createOperationButton("+");
+        JButton deleteButton = createOperationButton("−");
+        deleteButton.setBackground(new Color(245, 101, 81));
+        insertButton.setToolTipText("在当前证道内容页下面增加一页");
+        deleteButton.setToolTipText("删除当前证道内容页");
+
+        Box operationBox = Box.createHorizontalBox();
+        operationBox.add(insertButton);
+        operationBox.add(Box.createHorizontalStrut(PADDING_LEFT));
+        operationBox.add(deleteButton);
+        leftMiddle(rowBox, operationBox, operationWidth, 100);
+
+        insertButton.addActionListener(event -> {
+            int currentIndex = preachContentTextFieldList.indexOf(textField);
+            if (currentIndex >= 0) {
+                addPreachContentRow(currentIndex + 1);
+                refreshPreachContentPageLabels();
+                if (preachContentAnimationState.expanded) {
+                    animateRowVisibility(preachContentAnimationState, preachContentRowsBox,
+                            (Container) preachContentRowsBox.getParent(), true,
+                            preachContentTextFieldList.size() * 100);
+                }
+                preachContentRowsBox.revalidate();
+                preachContentRowsBox.repaint();
+            }
+        });
+        deleteButton.addActionListener(event -> {
+            if (preachContentTextFieldList.size() == 1) {
+                warn("证道内容至少保留一个输入框");
+                return;
+            }
+            int currentIndex = preachContentTextFieldList.indexOf(textField);
+            if (currentIndex >= 0) {
+                preachContentTextFieldList.remove(currentIndex);
+                preachContentPageLabelList.remove(currentIndex);
+                preachContentRowsBox.remove(rowBox);
+                refreshPreachContentPageLabels();
+                if (preachContentAnimationState.expanded) {
+                    animateRowVisibility(preachContentAnimationState, preachContentRowsBox,
+                            (Container) preachContentRowsBox.getParent(), true,
+                            preachContentTextFieldList.size() * 100);
+                }
+                preachContentRowsBox.revalidate();
+                preachContentRowsBox.repaint();
+            }
+        });
+    }
+
+    /** 页码始终反映当前文本框顺序。 */
+    private void refreshPreachContentPageLabels() {
+        for (int i = 0; i < preachContentPageLabelList.size(); i++) {
+            preachContentPageLabelList.get(i).setText("第" + (i + 1) + "页");
+        }
     }
 
     /**
@@ -834,19 +961,84 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         inputRow.add(Box.createHorizontalStrut(PADDING_LEFT));
         inputRow.add(scrollPane);
         inputRow.add(Box.createHorizontalGlue());
+        setAnimatedRowHeight(inputRow, 0);
         inputRow.setVisible(false);
         tableBox.add(inputRow);
 
         responseRadio.addActionListener(event -> {
-            inputRow.setVisible(true);
-            tableBox.revalidate();
-            tableBox.repaint();
+            animateRowVisibility(preachResponseAnimationState, inputRow, tableBox, true, 100);
         });
         noResponseRadio.addActionListener(event -> {
-            inputRow.setVisible(false);
-            tableBox.revalidate();
-            tableBox.repaint();
+            animateRowVisibility(preachResponseAnimationState, inputRow, tableBox, false, 100);
         });
+    }
+
+    /**
+     * 逐帧改变证道面板子区域的高度，实现展开和折叠过渡。
+     *
+     * <p>动画状态保存当前高度，因此用户在动画中再次切换选项时会从当前
+     * 画面平滑反向，不会先跳回完整高度或闪现输入区域。</p>
+     *
+     * @param state       当前区域的动画状态
+     * @param row         需要展开或折叠的内容行
+     * @param parent      负责重新布局的父容器
+     * @param visible     是否展开
+     * @param expandedHeight 完全展开时的目标高度
+     */
+    private void animateRowVisibility(VisibilityAnimationState state, Component row,
+                                      Container parent, boolean visible, int expandedHeight) {
+        if (state.timer != null && state.timer.isRunning()) {
+            state.timer.stop();
+        }
+
+        int targetHeight = visible ? expandedHeight : 0;
+        if (state.currentHeight == targetHeight) {
+            setAnimatedRowHeight(row, targetHeight);
+            row.setVisible(visible);
+            state.expanded = visible;
+            parent.revalidate();
+            parent.repaint();
+            return;
+        }
+
+        row.setVisible(true);
+        int direction = Integer.compare(targetHeight, state.currentHeight);
+        state.timer = new javax.swing.Timer(15, event -> {
+            int remaining = targetHeight - state.currentHeight;
+            int step = Math.max(4, Math.abs(remaining) / 10);
+            state.currentHeight += direction * step;
+            boolean reachedTarget = direction > 0
+                    ? state.currentHeight >= targetHeight
+                    : state.currentHeight <= targetHeight;
+            if (reachedTarget) {
+                state.currentHeight = targetHeight;
+            }
+            setAnimatedRowHeight(row, state.currentHeight);
+            parent.revalidate();
+            parent.repaint();
+
+            if (reachedTarget) {
+                state.timer.stop();
+                row.setVisible(visible);
+                state.expanded = visible;
+            }
+        });
+        state.timer.start();
+    }
+
+    /** 将动画容器的最小、首选和最大高度统一，确保 BoxLayout 按帧布局。 */
+    private void setAnimatedRowHeight(Component row, int height) {
+        Dimension size = new Dimension(row.getPreferredSize().width, height);
+        row.setMinimumSize(size);
+        row.setPreferredSize(size);
+        row.setMaximumSize(size);
+    }
+
+    /** 单个可折叠输入区域的动画进度。 */
+    private static class VisibilityAnimationState {
+        private javax.swing.Timer timer;
+        private int currentHeight;
+        private boolean expanded;
     }
 
     /**
@@ -1253,6 +1445,25 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         preach.setTitle(preachTitleTextField.getText().trim());
         preach.setScriptureNumber(preachScriptureTextField.getText().trim());
         worshipEntity.setPreach(preach);
+
+        boolean hasPreachContents = preachContentGroup.getSelection() != null
+                && "有".equals(preachContentGroup.getSelection().getActionCommand());
+        List<String> preachContents = new ArrayList<>();
+        if (hasPreachContents) {
+            for (int i = 0; i < preachContentTextFieldList.size(); i++) {
+                String content = preachContentTextFieldList.get(i).getText().trim();
+                if (preachContentTextFieldList.size() > 1 && isEmpty(content)) {
+                    warn("证道内容第" + (i + 1) + "页不能为空");
+                    return false;
+                }
+                if (!isEmpty(content)) {
+                    preachContents.add(content);
+                }
+            }
+        }
+        hasPreachContents = hasPreachContents && !preachContents.isEmpty();
+        worshipEntity.setPreachContentsEnabled(hasPreachContents);
+        worshipEntity.setPreachContents(hasPreachContents ? preachContents : null);
 
         boolean hasResponse = preachResponseGroup.getSelection() != null
                 && "有".equals(preachResponseGroup.getSelection().getActionCommand());
@@ -2136,14 +2347,19 @@ public class WorshipFormServiceImpl implements WorshipFormService {
 
     // 水平居左，垂直居中
     private void leftMiddle(Container container, Component component, int width) {
+        leftMiddle(container, component, width, TABLE_ROW_HEIGHT);
+    }
+
+    /** 水平居左并垂直居中，可指定单元格高度以容纳多行输入框。 */
+    private void leftMiddle(Container container, Component component, int width, int height) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
 
         JPanel cell = new JPanel();
-        cell.setPreferredSize(new Dimension(width, TABLE_ROW_HEIGHT));
-        cell.setMinimumSize(new Dimension(width, TABLE_ROW_HEIGHT));
-        cell.setMaximumSize(new Dimension(width, TABLE_ROW_HEIGHT));
+        cell.setPreferredSize(new Dimension(width, height));
+        cell.setMinimumSize(new Dimension(width, height));
+        cell.setMaximumSize(new Dimension(width, height));
         cell.setLayout(new GridBagLayout());
         cell.setBorder(new EmptyBorder(0, PADDING_LEFT, 0, 0));
         cell.add(component, gbc);
