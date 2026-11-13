@@ -24,8 +24,6 @@ public class PoetryTitleStep extends AbstractWorshipStep {
     private final int mode;
     private final List<PoetryEntity> fullPoetryList;
 
-    /** 诗歌标题页第一个占位符的字号。 */
-    private static final double DEFAULT_POETRY_TITLE_FONT_SIZE = 36.0;
     /** 诗歌标题页第二个占位符的默认字号。 */
     private static final double DEFAULT_POETRY_NAME_FONT_SIZE = 54.0;
 
@@ -65,7 +63,7 @@ public class PoetryTitleStep extends AbstractWorshipStep {
     private void fillPlaceholder(XSLFSlide slide, int idx, String text) throws PPTLayoutException {
         XSLFTextShape placeholder = TextUtil.getPlaceholderSafely(slide, idx, getLayout(), "");
         XSLFTextRun textRun = TextUtil.clearAndCreateTextRun(placeholder);
-        textRun.setText(text.trim());
+        textRun.setText(text);
         String fontStyle = SystemConfig.getUserConfigOrDefault(Dict.PPTProperty.POETRY_TITLE_FONT_FAMILT, DEFAULT_FONT_FAMILY);
         textRun.setFontFamily(fontStyle);
         if (idx == 1) {  // 制作诗歌封面
@@ -74,7 +72,7 @@ public class PoetryTitleStep extends AbstractWorshipStep {
                     DEFAULT_POETRY_NAME_FONT_SIZE));
             TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
         } else {     // 制作诗歌标题
-            textRun.setFontSize(DEFAULT_POETRY_TITLE_FONT_SIZE);
+            textRun.setFontSize(DEFAULT_TITLE_FONT_SIZE);
             TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
         }
         // 诗歌标题不使用粗体，避免继承母版样式后出现意外加粗。

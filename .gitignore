@@ -4,4 +4,6 @@ logs/
 jre/
 *.iml
 nul
+# 忽略 Microsoft Office 生成的临时文件，避免误上传 PPT 临时副本
+~$*
 /数据库/西敏小要理问答.db.bak

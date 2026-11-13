@@ -157,6 +157,10 @@ public class PreachScriptureStep extends AbstractWorshipStep {
         }
         referenceRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
         scriptureRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+        // 显式设置证道经文 run 的字号，避免继承母版占位符的默认字号。
+        double scriptureFontSize = getScriptureFontSize();
+        referenceRun.setFontSize(scriptureFontSize);
+        scriptureRun.setFontSize(scriptureFontSize);
         if (scriptureIndex % 2 == 1) {
             TextUtil.setScriptureFontColor(referenceRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
             TextUtil.setScriptureFontColor(scriptureRun, TextUtil.FontColor.RGB_FONT_COLOR_BLUE);
@@ -170,7 +174,7 @@ public class PreachScriptureStep extends AbstractWorshipStep {
     /** 获取证道经文使用的字号，用于测量章节前缀的实际宽度。 */
     private double getScriptureFontSize() {
         return SystemConfig.getUserConfigOrDefault(
-                Dict.PPTProperty.GENERAL_SCRIPTURE_FONT_SIZE,
+                Dict.PPTProperty.PREACH_SCRIPTURE_FONT_SIZE,
                 AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
     }
 

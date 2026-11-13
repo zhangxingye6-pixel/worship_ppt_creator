@@ -55,6 +55,11 @@ public class WorshipFormServiceImpl implements WorshipFormService {
     private boolean declarationTitleExpanded;
     private final VisibilityAnimationState preachContentAnimationState = new VisibilityAnimationState();
     private final VisibilityAnimationState preachResponseAnimationState = new VisibilityAnimationState();
+    /** 动态增删行的动画状态，按组件身份保存，避免插入后索引变化造成状态串行。 */
+    private final Map<Component, VisibilityAnimationState> dynamicRowAnimationStates = new IdentityHashMap<>();
+    /** 正在收起的行，避免动画尚未结束时重复点击删除。 */
+    private final Set<Component> dynamicRowsPendingRemoval =
+            Collections.newSetFromMap(new IdentityHashMap<>());
     private String selectedSummonMode;
     private JTextField worshipDateTextField;
     private JTextField churchNameTextField;
@@ -505,7 +510,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
 
         readingScriptureTextFieldList = new ArrayList<>();
         readingScriptureLabelList = new ArrayList<>();
-        addReadingScriptureRow(tableBox, 0);
+        addReadingScriptureRow(tableBox, 0, false);
 
         JTextField confessTextField = addRegularTableInputRow(tableBox, ScriptureContentKey.CONFESS);
         scriptureContentTextFieldMap.put(ScriptureContentKey.CONFESS, confessTextField);
@@ -534,7 +539,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             if (readingScriptureList != null && !readingScriptureList.isEmpty()) {
                 readingScriptureTextFieldList.get(0).setText(readingScriptureList.get(0));
                 for (int i = 1; i < readingScriptureList.size(); i++) {
-                    addReadingScriptureRow(tableBox, i);
+                    addReadingScriptureRow(tableBox, i, false);
                     readingScriptureTextFieldList.get(i).setText(readingScriptureList.get(i));
                 }
             } else if (!isEmpty(content.getReadingScripture())) {
@@ -987,6 +992,13 @@ public class WorshipFormServiceImpl implements WorshipFormService {
      */
     private void animateRowVisibility(VisibilityAnimationState state, Component row,
                                       Container parent, boolean visible, int expandedHeight) {
+        animateRowVisibility(state, row, parent, visible, expandedHeight, null);
+    }
+
+    /** 在动画完成后执行回调，用于安全移除已经收起的动态行。 */
+    private void animateRowVisibility(VisibilityAnimationState state, Component row,
+                                      Container parent, boolean visible, int expandedHeight,
+                                      Runnable completion) {
         if (state.timer != null && state.timer.isRunning()) {
             state.timer.stop();
         }
@@ -998,6 +1010,9 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             state.expanded = visible;
             parent.revalidate();
             parent.repaint();
+            if (completion != null) {
+                completion.run();
+            }
             return;
         }
 
@@ -1021,6 +1036,9 @@ public class WorshipFormServiceImpl implements WorshipFormService {
                 state.timer.stop();
                 row.setVisible(visible);
                 state.expanded = visible;
+                if (completion != null) {
+                    completion.run();
+                }
             }
         });
         state.timer.start();
@@ -1039,6 +1057,11 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         private javax.swing.Timer timer;
         private int currentHeight;
         private boolean expanded;
+    }
+
+    /** 取得动态行的动画状态；组件身份比列表索引更稳定。 */
+    private VisibilityAnimationState animationStateFor(Component row) {
+        return dynamicRowAnimationStates.computeIfAbsent(row, ignored -> new VisibilityAnimationState());
     }
 
     /**
@@ -1087,9 +1110,9 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         familyReportsTextFieldList = new LinkedList<>();
 
         // 家事报告不参与本地缓存，每次打开面板都提供两行默认输入。
-        addFamilyReportsTableInputRow(tableBox, 0);
+        addFamilyReportsTableInputRow(tableBox, 0, false);
         familyReportsTextFieldList.get(0).setText("周间聚会");
-        addFamilyReportsTableInputRow(tableBox, 1);
+        addFamilyReportsTableInputRow(tableBox, 1, false);
 
         JPanel panel = new JPanel();
         panel.setName(InputSection.FAMILY_REPORTS);
@@ -1968,7 +1991,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
      * @param tableBox 经文面板表格容器
      * @param index    章节列表索引
      */
-    private void addReadingScriptureRow(Box tableBox, int index) {
+    private void addReadingScriptureRow(Box tableBox, int index, boolean animate) {
         Box rowBox = Box.createHorizontalBox();
         int rowIndex = Math.min(
                 index + READING_SCRIPTURE_ROW_OFFSET,
@@ -1997,11 +2020,21 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         operationBox.add(deleteButton);
         leftMiddle(rowBox, operationBox, operationWidth);
 
+        VisibilityAnimationState animationState = new VisibilityAnimationState();
+        animationState.currentHeight = TABLE_ROW_HEIGHT;
+        animationState.expanded = true;
+        dynamicRowAnimationStates.put(rowBox, animationState);
+        if (animate) {
+            animationState.currentHeight = 0;
+            animationState.expanded = false;
+            setAnimatedRowHeight(rowBox, 0);
+        }
+
         insertButton.addActionListener(event -> {
             int currentIndex = getIndexOfRowBox(tableBox, rowBox);
             if (currentIndex != -1) {
                 int readingIndex = currentIndex - READING_SCRIPTURE_ROW_OFFSET;
-                addReadingScriptureRow(tableBox, readingIndex + 1);
+                addReadingScriptureRow(tableBox, readingIndex + 1, true);
                 tableBox.revalidate();
                 tableBox.repaint();
             }
@@ -2017,17 +2050,33 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             }
             int currentIndex = getIndexOfRowBox(tableBox, rowBox);
             if (currentIndex != -1) {
-                int readingIndex = currentIndex - READING_SCRIPTURE_ROW_OFFSET;
-                readingScriptureTextFieldList.remove(readingIndex);
-                readingScriptureLabelList.remove(readingIndex);
-                tableBox.remove(rowBox);
-                if (readingIndex == 0) {
-                    readingScriptureLabelList.get(0).setText(ScriptureContentKey.READING_SCRIPTURE);
+                if (!dynamicRowsPendingRemoval.add(rowBox)) {
+                    return;
                 }
-                tableBox.revalidate();
-                tableBox.repaint();
+                int readingIndex = currentIndex - READING_SCRIPTURE_ROW_OFFSET;
+                JTextField removedTextField = readingScriptureTextFieldList.get(readingIndex);
+                JLabel removedLabel = readingScriptureLabelList.get(readingIndex);
+                animateRowVisibility(animationStateFor(rowBox), rowBox, tableBox,
+                        false, 0, () -> {
+                            readingScriptureTextFieldList.remove(removedTextField);
+                            readingScriptureLabelList.remove(removedLabel);
+                            tableBox.remove(rowBox);
+                            dynamicRowAnimationStates.remove(rowBox);
+                            dynamicRowsPendingRemoval.remove(rowBox);
+                            if (!readingScriptureLabelList.isEmpty()) {
+                                readingScriptureLabelList.get(0)
+                                        .setText(ScriptureContentKey.READING_SCRIPTURE);
+                            }
+                            tableBox.revalidate();
+                            tableBox.repaint();
+                        });
             }
         });
+
+        if (animate) {
+            SwingUtilities.invokeLater(() -> animateRowVisibility(
+                    animationState, rowBox, tableBox, true, TABLE_ROW_HEIGHT));
+        }
     }
 
     /**
@@ -2150,7 +2199,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
      * @param tableBox          表格箱子
      * @param familyReportIndex 添加未知，从0开始
      */
-    private void addFamilyReportsTableInputRow(Box tableBox, int familyReportIndex) {
+    private void addFamilyReportsTableInputRow(Box tableBox, int familyReportIndex, boolean animate) {
         Box rowBox = Box.createHorizontalBox();
         tableBox.add(rowBox, familyReportIndex + ROW_INDEX_OFFSET);
 
@@ -2158,6 +2207,18 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         familyReportsTextFieldList.add(familyReportIndex, textField);
 
         addFamilyReportTableOperationCell(rowBox);
+
+        VisibilityAnimationState animationState = new VisibilityAnimationState();
+        animationState.currentHeight = TABLE_ROW_HEIGHT;
+        animationState.expanded = true;
+        dynamicRowAnimationStates.put(rowBox, animationState);
+        if (animate) {
+            animationState.currentHeight = 0;
+            animationState.expanded = false;
+            setAnimatedRowHeight(rowBox, 0);
+            SwingUtilities.invokeLater(() -> animateRowVisibility(
+                    animationState, rowBox, tableBox, true, TABLE_ROW_HEIGHT));
+        }
     }
 
     // 添加家事报告操作单元格
@@ -2171,7 +2232,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             int currentIndex = getIndexOfRowBox(tableBox, rowBox);
             if (currentIndex != -1) {
                 int nextIndex = currentIndex - ROW_INDEX_OFFSET + 1;
-                addFamilyReportsTableInputRow(tableBox, nextIndex);
+                addFamilyReportsTableInputRow(tableBox, nextIndex, true);
                 tableBox.getRootPane().revalidate();
             }
         }));
@@ -2185,9 +2246,20 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             } else {
                 int currentIndex = getIndexOfRowBox(tableBox, rowBox);
                 if (currentIndex != -1) {
-                    familyReportsTextFieldList.remove(currentIndex - ROW_INDEX_OFFSET);
-                    tableBox.remove(rowBox);
-                    tableBox.getRootPane().revalidate();
+                    if (!dynamicRowsPendingRemoval.add(rowBox)) {
+                        return;
+                    }
+                    int familyReportIndex = currentIndex - ROW_INDEX_OFFSET;
+                    JTextField removedTextField = familyReportsTextFieldList.get(familyReportIndex);
+                    animateRowVisibility(animationStateFor(rowBox), rowBox, tableBox,
+                            false, 0, () -> {
+                                familyReportsTextFieldList.remove(removedTextField);
+                                tableBox.remove(rowBox);
+                                dynamicRowAnimationStates.remove(rowBox);
+                                dynamicRowsPendingRemoval.remove(rowBox);
+                                tableBox.getRootPane().revalidate();
+                                tableBox.getRootPane().repaint();
+                            });
                 }
             }
         }));

@@ -51,6 +51,8 @@ public class Dict {
         public final static String POETRY_CONTENT_SPACE_BEFORE = "ppt.poetryContent.spaceBefore";
         // 读经
         public final static String READING_SCRIPTURE_FONT_SIZE = "ppt.readingScripture.fontSize";
+        // 证道
+        public final static String PREACH_SCRIPTURE_FONT_SIZE = "ppt.preachScripture.fontSize";
 
         // 宣信主题
         public final static String DECLARATION_METHOD = "ppt.declaration.method";

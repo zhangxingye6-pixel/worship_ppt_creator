@@ -27,7 +27,7 @@ public class TextUtil {
         public final static int[] RGB_FONT_COLOR_BLUE = {63, 114, 191};
         public final static int[] RGB_FONT_COLOR_RED = {245, 101, 81};
         public final static int[] RGB_FONT_COLOR_BLACK = {64, 64, 64};
-        public final static int[] RGB_FONT_COLOR_WHITE = {255, 255, 255};
+        public final static int[] RGB_FONT_COLOR_WHITE = {175, 216, 251};
 
     }
 
