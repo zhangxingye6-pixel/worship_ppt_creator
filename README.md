@@ -4,7 +4,7 @@
 
 由马克约瑟弟兄制作，且目前由另一个上帝蒙爱的弟兄稍加升级。
 
-![Version](https://img.shields.io/badge/version-v1.5.1-black)
+![Version](https://img.shields.io/badge/version-v1.8.2-black)
 [![GitHub license](https://img.shields.io/github/license/ClayGminx/worship-ppt)](https://github.com/ClayGminx/worship-ppt/blob/master/LICENSE)
 ![poi-ooxml dependency](https://img.shields.io/badge/poi--ooxml-v5.2.2-9cf)
 ![sqlite-jdbc dependency](https://img.shields.io/badge/sqlite--jdbc-3.39.2.0-9cf)
@@ -25,6 +25,31 @@
 敬拜PPT文件工具分为 Windows 版和 Mac OS 版。
 
 在 Windows 上，你只需要打开`Worship PPT.exe`。在 Mac上运行`Worship PPT.app`
+
+### 下载与版本更新
+
+正式版本发布在 [GitHub Releases](https://github.com/zhangxingye6-pixel/worship_ppt_creator/releases) 页面。每个正式版本包含以下三个独立的 ZIP 安装包：
+
+- Windows
+- macOS Intel（amd64）
+- macOS Apple Silicon（arm64）
+
+程序中的版本更新提示统一指向 GitHub Release 页面。
+
+### 开发与发布流程
+
+日常修改在 `dev-update` 分支进行，完成测试后再合并到 `main`。正式版本只从 `main` 创建版本 tag，格式为 `v主版本号.次版本号.修订号`，例如 `v1.8.2`。
+
+将正式 tag 推送到 GitHub 后，GitHub Actions 会自动执行以下流程：
+
+1. 使用 `windows-latest` 构建 Windows 版本。
+2. 使用 `macos-15-intel` 构建 macOS Intel（amd64）版本。
+3. 使用 `macos-15` 构建 macOS Apple Silicon（arm64）版本，并校验实际 runner 架构。
+4. 三个平台构建全部成功后，统一将三个 ZIP 上传到对应的 GitHub Release。
+
+测试版本可以使用 `v1.8.2-rc.1` 这样的 RC tag。RC 会执行构建并保留 GitHub Actions 构建产物，但不会上传到正式 Release。正式发布前应确认三个平台的构建均成功。
+
+当前项目只使用 GitHub 作为代码仓库和发布平台，不再同步到 Codeberg。
 
 ## 高级用法
 
