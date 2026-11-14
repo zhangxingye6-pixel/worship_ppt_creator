@@ -64,7 +64,7 @@ public class PreachContentStep extends AbstractWorshipStep {
                 slide, 0, getLayout(), "证道标题");
         XSLFTextRun titleRun = TextUtil.clearAndCreateTextRun(titlePlaceholder);
         titleRun.setFontFamily(DEFAULT_FONT_FAMILY);
-        titleRun.setFontSize(DEFAULT_TITLE_FONT_SIZE);
+        titleRun.setFontSize(getTitleFontSize());
         TextUtil.setScriptureFontColor(titleRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
         titleRun.setText("《" + preachEntity.getTitle() + "》");
     }
@@ -82,7 +82,7 @@ public class PreachContentStep extends AbstractWorshipStep {
             XSLFTextRun textRun = paragraph.addNewTextRun();
             textRun.setText(line);
             textRun.setFontFamily(DEFAULT_FONT_FAMILY);
-            textRun.setFontSize(DEFAULT_TITLE_FONT_SIZE);
+            textRun.setFontSize(getTitleFontSize());
             textRun.setBold(false);
         }
     }

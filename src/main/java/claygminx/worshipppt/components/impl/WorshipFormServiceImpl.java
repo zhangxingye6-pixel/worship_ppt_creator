@@ -1173,15 +1173,13 @@ public class WorshipFormServiceImpl implements WorshipFormService {
                             worshipPPTService.make();
                             File pptFile = worshipPPTService.getFile();
                             String message = "<html>" +
-                                    "<p>PPT制作完成！</p>" +
+                                    "<p>PPT制作完成</p>" +
                                     "<p>文件位于：" +
                                     pptFile.getAbsolutePath() +
                                     "</p>" +
                                     "<p>你还需要做一些检查工作：</p>" +
-                                    "<ol><li>如果不保留教会名称，请删除首页的占位符</li>" +
-                                    "<li>各环节的经文是否溢出边界</li>" +
-                                    "<li>圣餐诗歌需要手动调整以符合圣礼需要</li>" +
-                                    "<li>还有更多需要细心检查的细节</li></ol></html>";
+                                    "<ol><li>各环节的经文是否溢出边界</li>" +
+                                    "<li>宣信内容可能存在未删除的脚注</li></ol></html>";
                             JTextPane f = createTextPane(message);
                             JOptionPane.showMessageDialog(frame, f, "提示", JOptionPane.INFORMATION_MESSAGE);
                         } catch (FileServiceException | WorshipStepException | PPTLayoutException

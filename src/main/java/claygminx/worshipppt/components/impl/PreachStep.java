@@ -30,7 +30,7 @@ public class PreachStep extends AbstractWorshipStep {
         XSLFTextShape placeholder = TextUtil.getPlaceholderSafely(slide, 0, getLayout(), "");
         XSLFTextRun preachTitleTextRun = TextUtil.clearAndCreateTextRun(placeholder);
         preachTitleTextRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
-        preachTitleTextRun.setFontSize(AbstractWorshipStep.DEFAULT_TITLE_FONT_SIZE);
+        preachTitleTextRun.setFontSize(getTitleFontSize());
         TextUtil.setScriptureFontColor(preachTitleTextRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
         preachTitleTextRun.setText("《" + preachEntity.getTitle() + "》");
 

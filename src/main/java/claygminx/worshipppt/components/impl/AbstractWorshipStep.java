@@ -72,6 +72,33 @@ public abstract class AbstractWorshipStep implements WorshipStep {
     }
 
     /**
+     * 读取全局标题字号，配置缺失或无效时统一回退到父类默认值。
+     */
+    protected double getTitleFontSize() {
+        return SystemConfig.getUserConfigOrDefault(
+                Dict.PPTProperty.GENERAL_TITLE_FONT_SIZE,
+                DEFAULT_TITLE_FONT_SIZE);
+    }
+
+    /**
+     * 读取全局经文正文字号，配置缺失或无效时统一回退到父类默认值。
+     */
+    protected double getScriptureFontSize() {
+        return SystemConfig.getUserConfigOrDefault(
+                Dict.PPTProperty.GENERAL_SCRIPTURE_FONT_SIZE,
+                DEFAULT_SCRIPTURE_FONT_SIZE);
+    }
+
+    /**
+     * 读取全局阶段封面字号，配置缺失或无效时统一回退到父类默认值。
+     */
+    protected double getStepCoverFontSize() {
+        return SystemConfig.getUserConfigOrDefault(
+                Dict.PPTProperty.GENERAL_STEP_COVER_FONT_SIZE,
+                DEFAULT_STEP_COVER_FONT_SIZE);
+    }
+
+    /**
      * 获取标题和经文
      * @param scriptureService 经文服务对象
      * @param scriptureNumberList 经文编号实体对象列表
@@ -124,7 +151,7 @@ public abstract class AbstractWorshipStep implements WorshipStep {
         XSLFTextRun titleTextRun = TextUtil.clearAndCreateTextRun(titlePlaceHolder);
         titleTextRun.setText(titleAndScripture[0]);
         TextUtil.setScriptureFontColor(titleTextRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
-        double titleFontSize = SystemConfig.getUserConfigOrDefault(Dict.PPTProperty.GENERAL_TITLE_FONT_SIZE, DEFAULT_TITLE_FONT_SIZE);
+        double titleFontSize = getTitleFontSize();
         titleTextRun.setFontSize(titleFontSize);
         setDefaultTitleLineSpacing(titleTextRun);
         if (logger.isDebugEnabled()) {
@@ -137,7 +164,7 @@ public abstract class AbstractWorshipStep implements WorshipStep {
         XSLFTextRun scriptureTextRun = TextUtil.clearAndCreateTextRun(contentPlaceHolder);
         TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
         scriptureTextRun.setText(titleAndScripture[1]);
-        double scriptureFontSize = SystemConfig.getUserConfigOrDefault(Dict.PPTProperty.GENERAL_SCRIPTURE_FONT_SIZE, DEFAULT_SCRIPTURE_FONT_SIZE);
+        double scriptureFontSize = getScriptureFontSize();
         scriptureTextRun.setFontSize(scriptureFontSize);
         List<XSLFTextParagraph> paragraphs = contentPlaceHolder.getTextParagraphs();
         for (XSLFTextParagraph paragraph : paragraphs) {

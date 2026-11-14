@@ -33,7 +33,7 @@ public class PreachSummaryStep extends AbstractWorshipStep {
         XSLFTextRun textRun = TextUtil.clearAndCreateTextRun(placeholder);
         textRun.setText(preachEntity.getTitle());
         textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
-        textRun.setFontSize(AbstractWorshipStep.DEFAULT_STEP_COVER_FONT_SIZE);
+        textRun.setFontSize(getStepCoverFontSize());
         textRun.setBold(true);
         TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
 
@@ -42,7 +42,7 @@ public class PreachSummaryStep extends AbstractWorshipStep {
         // 封面第二个占位符只显示章节编号，说明文字由 PPT 母版负责呈现。
         textRun.setText(preachEntity.getScriptureNumber());
         textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
-        textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
+        textRun.setFontSize(getScriptureFontSize());
         textRun.setBold(false);
         TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
 

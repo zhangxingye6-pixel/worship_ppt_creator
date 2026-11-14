@@ -72,7 +72,7 @@ public class PoetryTitleStep extends AbstractWorshipStep {
                     DEFAULT_POETRY_NAME_FONT_SIZE));
             TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
         } else {     // 制作诗歌标题
-            textRun.setFontSize(DEFAULT_TITLE_FONT_SIZE);
+            textRun.setFontSize(getTitleFontSize());
             TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
         }
         // 诗歌标题不使用粗体，避免继承母版样式后出现意外加粗。

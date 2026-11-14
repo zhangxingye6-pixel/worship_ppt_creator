@@ -41,6 +41,8 @@ public class ReadingScriptureStep extends AbstractWorshipStep {
     /** 主领与下一段会众内容之间的段后间距，单位为磅。 */
     private static final double ROLE_SECTION_SPACE_AFTER = 12.0;
     private final static Pattern SCRIPTURE_REFERENCE = Pattern.compile("^【(.+?)(\\d+):(\\d+)】(.*)$");
+    /** 从读经模板生成的引用中提取书卷名，用于在不同书卷之间分页。 */
+    private static final Pattern FORMATTED_REFERENCE = Pattern.compile("^\\[(.+?)(\\d+):(\\d+)\\]$");
     /** 读经模板输出的角色标签和章节引用，例如“主领:[诗31:1]  经文正文”。 */
     private static final Pattern FORMATTED_SCRIPTURE = Pattern.compile("^(主领:|会众:|合　:)(\\[[^\\]]*\\])  (.*)$");
 
@@ -79,7 +81,6 @@ public class ReadingScriptureStep extends AbstractWorshipStep {
         XSLFTextShape placeholder = null;
 //        int lineCount = 0;      // 行计数器 动态控制时使用
         int slideCount = 0;     // 页计数器 动态控制时使用
-        int verseIndex = 0;
         double scriptureFontSize = SystemConfig.getUserConfigOrDefault(Dict.PPTProperty.READING_SCRIPTURE_FONT_SIZE, DEFAULT_SCRIPTURE_FONT_SIZE);
 
         List<String> validScriptureNumbers = new ArrayList<>();
@@ -125,40 +126,64 @@ public class ReadingScriptureStep extends AbstractWorshipStep {
         // 将完整经文列表一次性交给 scripture-format6.ftl，避免各段模板重新计算奇偶顺序。
         String formattedScripture = formatCombinedScripture(scriptureItems);
         String[] formattedScriptureArray = formattedScripture.replace("\r", "").split("\n");
-        for (int itemIndex = 0; itemIndex < formattedScriptureArray.length; itemIndex++) {
-                verseIndex++;
-                String scriptureItem = formattedScriptureArray[itemIndex];
-                // 创建新一页；多个输入框解析后的经文会按列表顺序继续追加。
-                if ((verseIndex - 1) % BEST_VERSE_NUMBER == 0) {
-                    slideCount++;
-                    slide = ppt.createSlide(layout);
-                    placeholder = TextUtil.getPlaceholderSafely(slide, 0, getLayout(), "标题部分");
-                    XSLFTextRun textRun = TextUtil.clearAndCreateTextRun(placeholder);
-                    // 经文标题优先使用统一配置；未配置时回退到父类默认字号。
-                    textRun.setFontSize(SystemConfig.getUserConfigOrDefault(
-                            Dict.PPTProperty.GENERAL_TITLE_FONT_SIZE,
-                            AbstractWorshipStep.DEFAULT_TITLE_FONT_SIZE));
-                    setDefaultTitleLineSpacing(textRun);
-                    textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
-                    TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
-                    textRun.setText(readingTitle);
+        int versesOnCurrentSlide = 0;
+        String currentBookName = null;
+        for (String scriptureItem : formattedScriptureArray) {
+            if (scriptureItem.trim().isEmpty()) {
+                continue;
+            }
 
-                    // 获取并清空占位符1中的默认文字，然后继续追加当前章节内容。
-                    placeholder = TextUtil.getPlaceholderSafely(slide, 1, getLayout(), "正文部分");
-                    placeholder.clearText();
-                    logger.info("开始第{}张读经幻灯片...", slideCount);
-                }
+            String bookName = getFormattedBookName(scriptureItem);
+            boolean bookChanged = currentBookName != null
+                    && bookName != null
+                    && !currentBookName.equals(bookName);
+            // 每个书卷从新页开始；同一书卷仍按每页最多两节分页。
+            if (slide == null || bookChanged || versesOnCurrentSlide >= BEST_VERSE_NUMBER) {
+                slideCount++;
+                slide = ppt.createSlide(layout);
+                placeholder = TextUtil.getPlaceholderSafely(slide, 0, getLayout(), "标题部分");
+                XSLFTextRun textRun = TextUtil.clearAndCreateTextRun(placeholder);
+                // 经文标题优先使用统一配置；未配置时回退到父类默认字号。
+                textRun.setFontSize(SystemConfig.getUserConfigOrDefault(
+                        Dict.PPTProperty.GENERAL_TITLE_FONT_SIZE,
+                        AbstractWorshipStep.DEFAULT_TITLE_FONT_SIZE));
+                setDefaultTitleLineSpacing(textRun);
+                textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+                TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
+                textRun.setText(readingTitle);
 
-                // 往正文添加一段经文，注意，可能因为经文字数较多，一行容不下。
+                // 获取并清空占位符1中的默认文字，然后继续追加当前章节内容。
                 placeholder = TextUtil.getPlaceholderSafely(slide, 1, getLayout(), "正文部分");
-                XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
-                paragraph.setLineSpacing(SCRIPTURE_LINE_SPACING);
-                useCustomLanguage(paragraph);
-                String trimScriptureItem = scriptureItem.trim();
+                placeholder.clearText();
+                versesOnCurrentSlide = 0;
+                logger.info("开始第{}张读经幻灯片...", slideCount);
+            }
+            if (bookName != null) {
+                currentBookName = bookName;
+            }
 
-                // 角色标签、章节引用和经文正文使用独立 run，避免标签和引用被正文的粗体样式带上。
-                addFormattedScriptureRuns(paragraph, trimScriptureItem, scriptureFontSize);
+            // 往正文添加一段经文，注意，可能因为经文字数较多，一行容不下。
+            placeholder = TextUtil.getPlaceholderSafely(slide, 1, getLayout(), "正文部分");
+            XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
+            paragraph.setLineSpacing(SCRIPTURE_LINE_SPACING);
+            useCustomLanguage(paragraph);
+            String trimScriptureItem = scriptureItem.trim();
+
+            // 角色标签、章节引用和经文正文使用独立 run，避免标签和引用被正文的粗体样式带上。
+            addFormattedScriptureRuns(paragraph, trimScriptureItem, scriptureFontSize);
+            versesOnCurrentSlide++;
         }
+    }
+
+    /** 从模板输出的一节经文中提取书卷简称。 */
+    private String getFormattedBookName(String scriptureItem) {
+        java.util.regex.Matcher scriptureMatcher = FORMATTED_SCRIPTURE.matcher(scriptureItem.trim());
+        if (!scriptureMatcher.matches()) {
+            return null;
+        }
+
+        java.util.regex.Matcher referenceMatcher = FORMATTED_REFERENCE.matcher(scriptureMatcher.group(2));
+        return referenceMatcher.matches() ? referenceMatcher.group(1) : null;
     }
 
     /**

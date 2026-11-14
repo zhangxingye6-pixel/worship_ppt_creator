@@ -171,13 +171,6 @@ public class PreachScriptureStep extends AbstractWorshipStep {
         return paragraph;
     }
 
-    /** 获取证道经文使用的字号，用于测量章节前缀的实际宽度。 */
-    private double getScriptureFontSize() {
-        return SystemConfig.getUserConfigOrDefault(
-                Dict.PPTProperty.PREACH_SCRIPTURE_FONT_SIZE,
-                AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
-    }
-
     /** 使用占位符实际排版高度判断是否超出可用正文区域。 */
     private boolean exceedsAvailableHeight(XSLFTextShape placeholder) {
         double availableHeight = placeholder.getAnchor().getHeight()

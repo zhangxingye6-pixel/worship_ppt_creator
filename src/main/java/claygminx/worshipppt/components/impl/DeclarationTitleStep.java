@@ -24,6 +24,8 @@ import java.util.List;
 public class DeclarationTitleStep extends AbstractWorshipStep {
 
     private final static Logger logger = LoggerFactory.getLogger(DeclarationTitleStep.class);
+    /** 宣信标题阶段的详细标题字号，统一用于信条章节和固定信经标题。 */
+    private static final double DECLARATION_TITLE_FONT_SIZE = 48.0;
 
     private final DeclarationEntity declarationEntity;
     private final ConfessionService confessionService;
@@ -86,9 +88,11 @@ public class DeclarationTitleStep extends AbstractWorshipStep {
                         logger.debug("填充了宣信主题：" + DeclarationTheme.DECLARATION_METHOD_MAP.get(DECLARATION_METHOD_NAME));
                     } else {
                         StringBuilder stringBuilder = new StringBuilder();
-                        String coverTitle = stringBuilder.append("第").append(chapter).append("章 ").append("《").append(chapterName).append("》").toString();
+                        String coverTitle = stringBuilder.append("第").append(chapter).append("章 ")
+                                .append("《").append(chapterName).append("》")
+                                .append(chapterNumber.trim()).toString();
                         textRun.setText(textRun.getRawText().replace(getCustomPlaceholder(), coverTitle));
-                        textRun.setFontSize(54.0);
+                        textRun.setFontSize(DECLARATION_TITLE_FONT_SIZE);
                         textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
                         textRun.setBold(false);
                         TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
@@ -113,12 +117,20 @@ public class DeclarationTitleStep extends AbstractWorshipStep {
         XSLFSlide slide = ppt.createSlide(layout);
         XSLFTextShape placeholder = TextUtil.getPlaceholderSafely(slide, 0, getLayout(), "信经标题");
         String title = "《" + declarationEntity.getTheme() + "》";
+        // 要理问答的标题页同时显示用户选择的题号范围，便于观众明确当前宣信内容。
+        if ("西敏大要理问答".equals(declarationEntity.getTheme())
+                || "西敏小要理问答".equals(declarationEntity.getTheme())) {
+            String questionNumbers = declarationEntity.getTitle();
+            if (StringUtils.isNotBlank(questionNumbers)) {
+                title += questionNumbers.trim();
+            }
+        }
 
         for (XSLFTextParagraph paragraph : placeholder.getTextParagraphs()) {
             for (XSLFTextRun textRun : paragraph.getTextRuns()) {
                 if (textRun.getRawText().contains(getCustomPlaceholder())) {
                     textRun.setText(textRun.getRawText().replace(getCustomPlaceholder(), title));
-                    textRun.setFontSize(54.0);
+                    textRun.setFontSize(DECLARATION_TITLE_FONT_SIZE);
                     textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
                     textRun.setBold(false);
                     TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
