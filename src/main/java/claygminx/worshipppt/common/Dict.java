@@ -51,6 +51,8 @@ public class Dict {
         public final static String POETRY_CONTENT_SPACE_BEFORE = "ppt.poetryContent.spaceBefore";
         // 读经
         public final static String READING_SCRIPTURE_FONT_SIZE = "ppt.readingScripture.fontSize";
+        // 证道
+        public final static String PREACH_SCRIPTURE_FONT_SIZE = "ppt.preachScripture.fontSize";
 
         // 宣信主题
         public final static String DECLARATION_METHOD = "ppt.declaration.method";
@@ -85,6 +87,7 @@ public class Dict {
         public final static String FORMAT3 = "scripture.format3";
         public final static String FORMAT4 = "scripture.format4";
         public final static String FORMAT5 = "scripture.format5";
+        public final static String FORMAT6 = "scripture.format6";
         public final static String REGEX = "scripture.regex";
 
         // 信条
@@ -130,6 +133,7 @@ public class Dict {
      */
     public static class InputSection {
         public final static String COVER = "封面";
+        public final static String PUBLIC_PRAY = "公祷事项";
         public final static String SCRIPTURE = "经文";
         public final static String DECLARATION = "宣信";
         public final static String PREACH = "证道";
@@ -181,6 +185,8 @@ public class Dict {
      */
     public static class ScriptureContentKey {
         public final static String SUMMON = "宣召";
+        public final static String SUMMON_LEADER = "主领";
+        public final static String SUMMON_RESPONSE = "回应";
         public final static String PUBLIC_PRAY = "公祷";
         public final static String CONFESS = "认罪";
         public final static String FORGIVE_SINS = "赦罪";
@@ -188,9 +194,18 @@ public class Dict {
     }
 
     /**
+     * 宣召回应方式
+     */
+    public static class SummonMode {
+        public final static String SCRIPTURE = "经文";
+        public final static String CUSTOM = "自定义";
+    }
+
+    /**
      * 宣信属性
      */
     public static class DeclarationKey {
+        public final static String THEME = "宣信方式";
         public final static String TITLE = "主题";
         public final static String SPEAKER = "讲员";
     }
@@ -208,6 +223,12 @@ public class Dict {
      */
     public static class HolyCommunionKey {
         public final static String NAME_LIST = "领餐名单";
+    }
+
+    /** 感恩敬拜经文选项，值同时用于 GUI 显示和 procedure 分支判断。 */
+    public static class ThanksgivingScripture {
+        public final static String CORINTHIANS_AND_ROMANS = "林后8:9; 罗12:1–2";
+        public final static String MALACHI = "玛3:8-12";
     }
 
 }

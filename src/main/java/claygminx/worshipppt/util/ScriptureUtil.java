@@ -226,7 +226,75 @@ public class ScriptureUtil {
     public static String simplifyScripture(String scripture) {
         // 通过key取出配置中的正则表达式，去除经文中的某些符号
         String pattern = SystemConfig.getString(Dict.ScriptureProperty.REGEX);
-        return scripture.replaceAll(pattern, "");
+        String simplifiedScripture = scripture.replaceAll(pattern, "");
+
+        // 渲染前去除中文全角括号及括号内的注释内容，例如“（细拉）”。
+        // 正文中的“（一）”“（1）”属于正常序号，必须保留，不能被当作注释删除。
+        return removeScriptureAnnotations(simplifiedScripture);
+    }
+
+    /**
+     * 删除经文中的括号注释，同时保留常见的中文、阿拉伯数字序号。
+     *
+     * @param scripture 已完成基础符号精简的经文
+     * @return 删除注释后的经文
+     */
+    private static String removeScriptureAnnotations(String scripture) {
+        if (scripture == null || scripture.isEmpty()) {
+            return scripture;
+        }
+
+        /*
+         * 正则表达式无法可靠处理嵌套括号。例如：
+         * “哎呀呀（1 2（3 4）5 6）”会在内层右括号处提前结束匹配，
+         * 导致外层括号后的文字泄漏。这里使用栈匹配每一个完整括号组，
+         * 再按嵌套层级决定删除范围。
+         */
+        List<Integer> openingIndexes = new ArrayList<>();
+        List<int[]> matchedGroups = new ArrayList<>();
+        for (int i = 0; i < scripture.length(); i++) {
+            char current = scripture.charAt(i);
+            if (current == '（') {
+                openingIndexes.add(i);
+            } else if (current == '）' && !openingIndexes.isEmpty()) {
+                int depth = openingIndexes.size();
+                int openingIndex = openingIndexes.remove(openingIndexes.size() - 1);
+                // 记录所有完整括号组，第三个元素表示该组的嵌套层级。
+                matchedGroups.add(new int[]{openingIndex, i, depth});
+            }
+        }
+
+        boolean[] removed = new boolean[scripture.length()];
+        for (int[] group : matchedGroups) {
+            String content = scripture.substring(group[0] + 1, group[1]).trim();
+            boolean nestedGroup = group[2] > 1;
+            boolean containsNestedParentheses = content.indexOf('（') >= 0 || content.indexOf('）') >= 0;
+            /*
+             * 嵌套场景只删除当前内层括号组，保留最外层括号及其余文本。
+             * 非嵌套场景延续旧规则：删除注释括号，保留正常序号括号。
+             */
+            if (nestedGroup || (!containsNestedParentheses && !isNormalSequenceNumber(content))) {
+                for (int i = group[0]; i <= group[1]; i++) {
+                    removed[i] = true;
+                }
+            }
+        }
+
+        StringBuilder result = new StringBuilder(scripture.length());
+        for (int i = 0; i < scripture.length(); i++) {
+            if (!removed[i]) {
+                result.append(scripture.charAt(i));
+            }
+        }
+        return result.toString();
+    }
+
+    /** 判断括号内容是否为正文中的正常序号，而非释义或其他注释。 */
+    private static boolean isNormalSequenceNumber(String content) {
+        return content.matches("[一二三四五六七八九十百千万零〇两]+")
+                || content.matches("[0-9]+")
+                || content.matches("[①②③④⑤⑥⑦⑧⑨⑩]+")
+                || content.matches("[甲乙丙丁戊己庚辛壬癸]");
     }
 
     /**

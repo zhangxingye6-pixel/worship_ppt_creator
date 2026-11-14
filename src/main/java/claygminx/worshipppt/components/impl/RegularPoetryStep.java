@@ -98,7 +98,7 @@ public class RegularPoetryStep extends AbstractWorshipStep {
         logger.info("诗歌幻灯片制作完成");
     }
 
-    private void renderPoetry(PoetryEntity poetry) throws WorshipStepException, PPTLayoutException, PoetrySourcesNotExistException {
+    protected void renderPoetry(PoetryEntity poetry) throws WorshipStepException, PPTLayoutException, PoetrySourcesNotExistException {
         File directory = poetry.getDirectory();
         try {
             checkDirectory(directory);
@@ -120,7 +120,11 @@ public class RegularPoetryStep extends AbstractWorshipStep {
         } catch (PPTLayoutException e) {
             throw new PPTLayoutException(e.getMessage(), e);
         } catch (Exception e) {
-            throw new WorshipStepException("未知异常！", e);
+            String reason = e.getMessage();
+            if (reason == null || reason.isBlank()) {
+                reason = e.getClass().getSimpleName();
+            }
+            throw new WorshipStepException("处理诗歌“" + poetry.getName() + "”时失败：" + reason, e);
         }
     }
 

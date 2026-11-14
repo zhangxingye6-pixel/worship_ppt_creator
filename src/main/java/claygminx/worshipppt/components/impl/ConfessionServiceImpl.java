@@ -45,6 +45,27 @@ public class ConfessionServiceImpl implements ConfessionService {
 
     private final static String DB_URL;
 
+    private final static String LARGER_CATECHISM_DB_URL;
+    private final static String SHORTER_CATECHISM_DB_URL;
+
+    static {
+        String dbFilePath = SystemConfig.getString("confession.largerCatechism.SQLite.path");
+        File dbFile = new File(dbFilePath);
+        if (!dbFile.exists()) {
+            throw new SystemException("大要理问答数据库连接异常：" + dbFilePath + "未找到数据库文件");
+        }
+        LARGER_CATECHISM_DB_URL = Dict.DatabaseProperty.JDBC_SQLITE_PREFIX + dbFile.getAbsolutePath();
+    }
+
+    static {
+        String dbFilePath = SystemConfig.getString("confession.shorterCatechism.SQLite.path");
+        File dbFile = new File(dbFilePath);
+        if (!dbFile.exists()) {
+            throw new SystemException("小要理问答数据库连接异常：" + dbFilePath + "未找到数据库文件");
+        }
+        SHORTER_CATECHISM_DB_URL = Dict.DatabaseProperty.JDBC_SQLITE_PREFIX + dbFile.getAbsolutePath();
+    }
+
     private static ConfessionService confessionService;
 
     /**
@@ -402,6 +423,68 @@ public class ConfessionServiceImpl implements ConfessionService {
         int endChapter = requestEntity.getEndChapter();
         int endVerse = requestEntity.getEndVerse();
         return confessionService.queryRange(startChapter, endChapter, startVerse, endVerse);
+    }
+
+    /** 将大要理题号范围转换成现有信条查询实体，保持模板渲染流程不变。 */
+    @Override
+    public ConfessionQueryResultEntity queryLargerCatechism(ConfessionQueryRequestEntity requestEntity)
+            throws ScriptureNumberException {
+        return queryCatechism(requestEntity, LARGER_CATECHISM_DB_URL, "larger_catechism", "西敏大要理问答");
+    }
+
+    /** 将小要理题号范围映射到第1章，并复用宣信的章、节查询实体。 */
+    @Override
+    public ConfessionQueryResultEntity queryShorterCatechism(ConfessionQueryRequestEntity requestEntity)
+            throws ScriptureNumberException {
+        return queryCatechism(requestEntity, SHORTER_CATECHISM_DB_URL, "shorter_catechism", "西敏小要理问答");
+    }
+
+    /** 按统一的第1章、题号作为节号的结构查询大小要理数据库。 */
+    private ConfessionQueryResultEntity queryCatechism(ConfessionQueryRequestEntity requestEntity,
+                                                       String databaseUrl,
+                                                       String tableName,
+                                                       String catechismName) throws ScriptureNumberException {
+        int startChapter = requestEntity.getStartChapter();
+        int endChapter = requestEntity.getEndChapter();
+        int startVerse = requestEntity.getStartVerse();
+        int endVerse = requestEntity.getEndVerse();
+        if (startChapter != 1 || (endChapter != 0 && endChapter != 1)) {
+            throw new ScriptureNumberException(catechismName + "只有第1章，题号已按节号处理");
+        }
+        int firstQuestion = startVerse == 0 ? 1 : startVerse;
+        int lastQuestion = endVerse == 0 ? Integer.MAX_VALUE : endVerse;
+        if (firstQuestion > lastQuestion) {
+            throw new ScriptureNumberException(catechismName + "题号范围无效，请检查输入");
+        }
+        // 要理数据库的题号统一保存在 Verse 列；Chapter 仅用于复用解析结构，
+        // 且大要理第 1 题的历史数据章号为空，因此查询不能依赖 Chapter 列。
+        String sql = "SELECT Verse, Content FROM " + tableName + " WHERE Verse >= ? AND Verse <= ? ORDER BY Verse";
+        try (Connection connection = DriverManager.getConnection(databaseUrl);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, firstQuestion);
+            statement.setInt(2, lastQuestion);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<Integer> verses = new ArrayList<>();
+                List<String> contents = new ArrayList<>();
+                while (resultSet.next()) {
+                    verses.add(resultSet.getInt("Verse"));
+                    contents.add(resultSet.getString("Content"));
+                }
+                if (contents.isEmpty()) {
+                    throw new ScriptureNumberException("未找到对应的" + catechismName + "题号，请检查输入");
+                }
+                ConfessionContentEntity content = new ConfessionContentEntity();
+                content.setChapterName(catechismName);
+                content.setChapter(1);
+                content.setVerses(verses);
+                content.setContents(contents);
+                ConfessionQueryResultEntity result = new ConfessionQueryResultEntity();
+                result.setConfessionContents(List.of(content));
+                return result;
+            }
+        } catch (SQLException e) {
+            throw new SystemException(catechismName + "查询失败", e);
+        }
     }
 
     /**

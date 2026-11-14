@@ -4,6 +4,7 @@ import claygminx.worshipppt.common.entity.confession.ConfessionContentEntity;
 import claygminx.worshipppt.common.entity.confession.ConfessionQueryRequestEntity;
 import claygminx.worshipppt.common.entity.confession.ConfessionQueryResultEntity;
 import claygminx.worshipppt.common.entity.confession.ConfessionVerseEntity;
+import claygminx.worshipppt.exception.ScriptureNumberException;
 import freemarker.template.TemplateException;
 
 import java.io.IOException;
@@ -35,6 +36,14 @@ public interface ConfessionService {
      * @return 结果封装对象
      */
     ConfessionQueryResultEntity query(ConfessionQueryRequestEntity requestEntity);
+
+    /** 查询第一章中指定题号范围的大要理问答。 */
+    ConfessionQueryResultEntity queryLargerCatechism(ConfessionQueryRequestEntity requestEntity)
+            throws ScriptureNumberException;
+
+    /** 查询第一章中指定题号范围的小要理问答。 */
+    ConfessionQueryResultEntity queryShorterCatechism(ConfessionQueryRequestEntity requestEntity)
+            throws ScriptureNumberException;
 
     /**
      * 获取格式化的String内容列表

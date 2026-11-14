@@ -8,6 +8,7 @@ import claygminx.worshipppt.exception.WorshipStepException;
 import claygminx.worshipppt.common.Dict;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,7 +28,10 @@ public class HolyCommunionPoetryStep extends RegularPoetryStep {
     @Override
     public void execute() throws WorshipStepException, PPTLayoutException, PoetrySourcesNotExistException {
         try {
-            super.execute();
+            for (PoetryEntity poetry : poetryList) {
+                new HolyCommunionPoetryTitleStep(getPpt(), "圣餐-诗歌标题", Collections.singletonList(poetry)).execute();
+                renderPoetry(poetry);
+            }
         } catch (PoetrySourcesNotExistException e) {
             throw new PoetrySourcesNotExistException("圣餐诗歌：" + e.getMessage());
         }

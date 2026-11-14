@@ -38,12 +38,35 @@ public class WorshipEntity implements Serializable {
     /**
      * 家事报告
      */
-    private List<String> familyReports;
+    /**
+     * 家事报告。该字段仅用于当前生成任务，不参与敬拜配置缓存序列化。
+     */
+    private transient List<String> familyReports;
+
+    /**
+     * 公祷事项。该字段仅用于当前生成任务，不参与敬拜配置缓存序列化。
+     */
+    private transient List<String> publicPrayContents;
+
+    /** 证道回应开关，仅用于当前生成任务，不写入敬拜配置缓存。 */
+    private transient boolean preachResponseEnabled;
+
+    /** 证道回应事项，仅用于当前生成任务，不写入敬拜配置缓存。 */
+    private transient List<String> preachResponseContents;
+
+    /** 证道内容页开关，仅用于当前生成任务，不写入敬拜配置缓存。 */
+    private transient boolean preachContentsEnabled;
+
+    /** 证道内容页正文，仅用于当前生成任务，不写入敬拜配置缓存。 */
+    private transient List<String> preachContents;
 
     /**
      * 圣餐
      */
     private HolyCommunionEntity holyCommunion;
+
+    /** 感恩敬拜经文选项，用于选择感恩奉献阶段的 PPT 母版。 */
+    private String thanksgivingScripture;
 
     public CoverEntity getCover() {
         return cover;
@@ -93,12 +116,60 @@ public class WorshipEntity implements Serializable {
         this.familyReports = familyReports;
     }
 
+    public List<String> getPublicPrayContents() {
+        return publicPrayContents;
+    }
+
+    public void setPublicPrayContents(List<String> publicPrayContents) {
+        this.publicPrayContents = publicPrayContents;
+    }
+
+    public boolean isPreachResponseEnabled() {
+        return preachResponseEnabled;
+    }
+
+    public void setPreachResponseEnabled(boolean preachResponseEnabled) {
+        this.preachResponseEnabled = preachResponseEnabled;
+    }
+
+    public List<String> getPreachResponseContents() {
+        return preachResponseContents;
+    }
+
+    public void setPreachResponseContents(List<String> preachResponseContents) {
+        this.preachResponseContents = preachResponseContents;
+    }
+
+    public boolean isPreachContentsEnabled() {
+        return preachContentsEnabled;
+    }
+
+    public void setPreachContentsEnabled(boolean preachContentsEnabled) {
+        this.preachContentsEnabled = preachContentsEnabled;
+    }
+
+    public List<String> getPreachContents() {
+        return preachContents;
+    }
+
+    public void setPreachContents(List<String> preachContents) {
+        this.preachContents = preachContents;
+    }
+
     public HolyCommunionEntity getHolyCommunion() {
         return holyCommunion;
     }
 
     public void setHolyCommunion(HolyCommunionEntity holyCommunion) {
         this.holyCommunion = holyCommunion;
+    }
+
+    public String getThanksgivingScripture() {
+        return thanksgivingScripture;
+    }
+
+    public void setThanksgivingScripture(String thanksgivingScripture) {
+        this.thanksgivingScripture = thanksgivingScripture;
     }
 
     @Override

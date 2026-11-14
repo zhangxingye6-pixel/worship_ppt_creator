@@ -48,7 +48,7 @@ public class WorshipPPTServiceImpl implements WorshipPPTService {
         } catch (FileServiceException e) {
             throw e;
         } catch (Exception e) {
-            throw new SystemException("出现未知错误！", e);
+            throw new SystemException("创建敬拜PPT文件失败：" + getExceptionReason(e), e);
         }
 
         // 2.按照指定模板制作幻灯片
@@ -56,6 +56,7 @@ public class WorshipPPTServiceImpl implements WorshipPPTService {
         try (FileInputStream fis = new FileInputStream(file)) {
             // 创建PPT对象
             ppt = new XMLSlideShow(fis);
+            removeTemplateSlides(ppt);
             // 使用自定义语言
             String lang = SystemConfig.getString(Dict.PPTProperty.GENERAL_LANGUAGE);
             if (lang == null || "".equals(lang)) {
@@ -88,9 +89,11 @@ public class WorshipPPTServiceImpl implements WorshipPPTService {
         } catch (PoetrySourcesNotExistException e) {
             throw new PoetrySourcesNotExistException(e.getMessage(), e);
         } catch (ScriptureNumberException e) {
-            throw new ScriptureNumberException(e.getMessage());
+            throw new ScriptureNumberException(e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
-            throw new SystemException("出现未知错误！", e);
+            throw new SystemException("制作敬拜阶段幻灯片时发生异常：" + getExceptionReason(e), e);
         }
 
         // 4.保存
@@ -101,8 +104,36 @@ public class WorshipPPTServiceImpl implements WorshipPPTService {
             progressMonitor.close();
         } catch (IOException e) {
             throw new FileServiceException("保存PPT文件时出现错误！", e);
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
-            throw new SystemException("出现未知错误！", e);
+            throw new SystemException("保存PPT文件时发生异常：" + getExceptionReason(e), e);
+        }
+    }
+
+    /** 获取可展示给用户的底层异常原因，避免异常消息为空时再次显示“未知异常”。 */
+    private String getExceptionReason(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current.getMessage() != null && !current.getMessage().isBlank()) {
+                return current.getMessage();
+            }
+            current = current.getCause();
+        }
+        return throwable.getClass().getSimpleName();
+    }
+
+    /**
+     * 主母版文件只提供版式定义，实际输出页由敬拜流程逐页创建。
+     * 删除母版中预置的幻灯片，避免空白模板页排在生成的封面之前。
+     */
+    private void removeTemplateSlides(XMLSlideShow ppt) {
+        int slideCount = ppt.getSlides().size();
+        for (int index = slideCount - 1; index >= 0; index--) {
+            ppt.removeSlide(index);
+        }
+        if (slideCount > 0) {
+            logger.debug("已清除主母版中的 {} 张预置幻灯片", slideCount);
         }
     }
 

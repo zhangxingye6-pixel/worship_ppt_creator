@@ -16,6 +16,10 @@ import org.openxmlformats.schemas.drawingml.x2006.main.CTTextParagraphProperties
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.Font;
+import java.awt.GraphicsEnvironment;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextLayout;
 import java.util.List;
 
 /**
@@ -29,10 +33,12 @@ public abstract class AbstractWorshipStep implements WorshipStep {
     private final String layout;
 
     // 默认文本常量
-    public final static double DEFAULT_TITLE_FONT_SIZE = 40.0;
-    public final static double DEFAULT_SCRIPTURE_FONT_SIZE = 35.0;
+    public final static double DEFAULT_TITLE_FONT_SIZE = 28.0;
+    /** PowerPoint 使用百分比表示段落行距，105 表示 1.05 倍行距。 */
+    protected static final double DEFAULT_TITLE_LINE_SPACING = 105.0;
+    public final static double DEFAULT_SCRIPTURE_FONT_SIZE = 30.0;
     public final static String DEFAULT_FONT_FAMILY = "Microsoft YaHei";
-    public final static double DEFAULT_STEP_COVER_FONT_SIZE = 60.0;
+    public final static double DEFAULT_STEP_COVER_FONT_SIZE = 48.0;
 
     /**
      * 通用的构造器
@@ -63,6 +69,33 @@ public abstract class AbstractWorshipStep implements WorshipStep {
 
     public String getFontFamily() {
         return SystemConfig.getString(Dict.PPTProperty.GENERAL_FONT_FAMILY);
+    }
+
+    /**
+     * 读取全局标题字号，配置缺失或无效时统一回退到父类默认值。
+     */
+    protected double getTitleFontSize() {
+        return SystemConfig.getUserConfigOrDefault(
+                Dict.PPTProperty.GENERAL_TITLE_FONT_SIZE,
+                DEFAULT_TITLE_FONT_SIZE);
+    }
+
+    /**
+     * 读取全局经文正文字号，配置缺失或无效时统一回退到父类默认值。
+     */
+    protected double getScriptureFontSize() {
+        return SystemConfig.getUserConfigOrDefault(
+                Dict.PPTProperty.GENERAL_SCRIPTURE_FONT_SIZE,
+                DEFAULT_SCRIPTURE_FONT_SIZE);
+    }
+
+    /**
+     * 读取全局阶段封面字号，配置缺失或无效时统一回退到父类默认值。
+     */
+    protected double getStepCoverFontSize() {
+        return SystemConfig.getUserConfigOrDefault(
+                Dict.PPTProperty.GENERAL_STEP_COVER_FONT_SIZE,
+                DEFAULT_STEP_COVER_FONT_SIZE);
     }
 
     /**
@@ -118,8 +151,9 @@ public abstract class AbstractWorshipStep implements WorshipStep {
         XSLFTextRun titleTextRun = TextUtil.clearAndCreateTextRun(titlePlaceHolder);
         titleTextRun.setText(titleAndScripture[0]);
         TextUtil.setScriptureFontColor(titleTextRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
-        double titleFontSize = SystemConfig.getUserConfigOrDefault(Dict.PPTProperty.GENERAL_TITLE_FONT_SIZE, DEFAULT_TITLE_FONT_SIZE);
+        double titleFontSize = getTitleFontSize();
         titleTextRun.setFontSize(titleFontSize);
+        setDefaultTitleLineSpacing(titleTextRun);
         if (logger.isDebugEnabled()) {
             logger.debug("填充标题：" + titleAndScripture[0]);
         }
@@ -130,7 +164,7 @@ public abstract class AbstractWorshipStep implements WorshipStep {
         XSLFTextRun scriptureTextRun = TextUtil.clearAndCreateTextRun(contentPlaceHolder);
         TextUtil.setScriptureFontColor(scriptureTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
         scriptureTextRun.setText(titleAndScripture[1]);
-        double scriptureFontSize = SystemConfig.getUserConfigOrDefault(Dict.PPTProperty.GENERAL_SCRIPTURE_FONT_SIZE, DEFAULT_SCRIPTURE_FONT_SIZE);
+        double scriptureFontSize = getScriptureFontSize();
         scriptureTextRun.setFontSize(scriptureFontSize);
         List<XSLFTextParagraph> paragraphs = contentPlaceHolder.getTextParagraphs();
         for (XSLFTextParagraph paragraph : paragraphs) {
@@ -139,6 +173,11 @@ public abstract class AbstractWorshipStep implements WorshipStep {
         if (logger.isDebugEnabled()) {
             logger.debug("填充经文：" + titleAndScripture[1]);
         }
+    }
+
+    /** 将标题段落的行距统一设置为 1.0 倍，不改变正文段落的排版。 */
+    protected void setDefaultTitleLineSpacing(XSLFTextRun titleTextRun) {
+        titleTextRun.getParagraph().setLineSpacing(DEFAULT_TITLE_LINE_SPACING);
     }
 
     /**
@@ -174,5 +213,80 @@ public abstract class AbstractWorshipStep implements WorshipStep {
         // 设置语言
         endParaRPr.setLang(lang);
         endParaRPr.setAltLang(lang);
+    }
+
+    /**
+     * 测量文本在指定字体和字号下的显示宽度，用于计算经文续行的悬挂缩进。
+     *
+     * <p>PowerPoint 的换行由段落的左边距和悬挂缩进控制，POI 本身不会返回
+     * 文本在 PowerPoint 中的实际排版宽度。因此这里先使用 Java 字体引擎按字形
+     * 宽度测量，避免仅按字符数量估算导致中文、数字和标点混排时产生偏移。</p>
+     *
+     * <p>在运行环境缺少目标字体或字体引擎测量失败时，回退到中英文字符宽度估算，
+     * 保证无图形环境或跨平台打包环境仍能生成 PPT。</p>
+     *
+     * @param text       待测量文本
+     * @param fontSize   字号，单位为磅
+     * @param fontFamily 字体名称
+     * @return 文本宽度，单位为磅
+     */
+    protected double measureTextWidth(String text, double fontSize, String fontFamily) {
+        if (text == null || text.isEmpty() || fontSize <= 0) {
+            return 0.0;
+        }
+
+        try {
+            Font font = new Font(fontFamily, Font.PLAIN, 1).deriveFont((float) fontSize);
+            // Java 找不到目标字体时会静默替换为逻辑字体。逻辑字体的字形宽度
+            // 可能与 PPT 母版使用的中文字体差异很大，不能直接用于设置缩进。
+            if (!isFontFamilyAvailable(fontFamily, font.getFamily())) {
+                return estimateTextWidthByCharacter(text, fontSize);
+            }
+            FontRenderContext renderContext = new FontRenderContext(null, true, true);
+            double measuredWidth = new TextLayout(text, font, renderContext).getAdvance();
+            if (measuredWidth > 0.0) {
+                return measuredWidth;
+            }
+        } catch (RuntimeException e) {
+            logger.debug("无法使用字体引擎测量文本宽度，将回退到字符宽度估算", e);
+        }
+
+        return estimateTextWidthByCharacter(text, fontSize);
+    }
+
+    /** 判断请求字体或其系统字体族名称是否真实存在，避免误用 Java 逻辑字体。 */
+    private boolean isFontFamilyAvailable(String requestedFamily, String resolvedFamily) {
+        if (requestedFamily == null || requestedFamily.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            for (String availableFamily : GraphicsEnvironment
+                    .getLocalGraphicsEnvironment()
+                    .getAvailableFontFamilyNames()) {
+                if (requestedFamily.equalsIgnoreCase(availableFamily)
+                        || resolvedFamily.equalsIgnoreCase(availableFamily)) {
+                    return true;
+                }
+            }
+        } catch (RuntimeException e) {
+            logger.debug("无法读取系统字体列表，将使用字符宽度估算", e);
+        }
+        return false;
+    }
+
+    /** 按中英文字符的大致显示宽度进行跨平台回退估算。 */
+    private double estimateTextWidthByCharacter(String text, double fontSize) {
+        double widthUnits = 0.0;
+        for (int i = 0; i < text.length(); i++) {
+            char character = text.charAt(i);
+            if (character == ' ') {
+                widthUnits += 0.25;
+            } else if (character <= 0x00FF) {
+                widthUnits += 0.5;
+            } else {
+                widthUnits += 1.0;
+            }
+        }
+        return widthUnits * fontSize;
     }
 }

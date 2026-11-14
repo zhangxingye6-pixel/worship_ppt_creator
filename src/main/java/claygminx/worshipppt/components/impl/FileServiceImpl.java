@@ -13,7 +13,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Objects;
 import java.util.Scanner;
 
 public class FileServiceImpl implements FileService {
@@ -74,22 +73,11 @@ public class FileServiceImpl implements FileService {
             throw new SystemException(Dict.PPTProperty.GENERAL_PROCEDURE_XML_PATH + "不可为空！");
         }
 
-        if (xmlPath.startsWith("classpath:")) {// 配置的是类路径，从jar包中读取
-            ClassLoader classLoader = FileServiceImpl.class.getClassLoader();
-            String path = xmlPath.substring(10);// 删除路径中的字串“classpath:”
-            try (InputStream inputStream = Objects.requireNonNull(classLoader.getResourceAsStream(path));
-                 Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8.name())) {
-                return internalReadWorshipProcedureXml(scanner);
-            } catch (IOException | NullPointerException e) {
-                throw new FileServiceException("读取" + xmlPath + "失败！", e);
-            }
-        } else {
-            try (InputStream inputStream = new FileInputStream(xmlPath);
-                 Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8.name())) {
-                return internalReadWorshipProcedureXml(scanner);
-            } catch (IOException | NullPointerException e) {
-                throw new FileServiceException("读取" + xmlPath + "失败！", e);
-            }
+        try (InputStream inputStream = new FileInputStream(xmlPath);
+             Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8.name())) {
+            return internalReadWorshipProcedureXml(scanner);
+        } catch (IOException | NullPointerException e) {
+            throw new FileServiceException("读取" + xmlPath + "失败！", e);
         }
     }
 

@@ -40,15 +40,15 @@ public class HolyCommunionPoetryTitleStep extends AbstractWorshipStep {
                     String rawText = textRun.getRawText();
                     if (rawText.contains("圣餐诗歌")){
                         textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
-                        textRun.setFontSize(AbstractWorshipStep.DEFAULT_STEP_COVER_FONT_SIZE);
+                        textRun.setFontSize(54.0);
                         textRun.setBold(false);
                         TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
                     }
                     // 自定义占位符替换成诗歌名
                     if (rawText.contains(getCustomPlaceholder())) {
                         textRun.setText(rawText.replace(getCustomPlaceholder(), poetryEntity.getName()));
-                        textRun.setFontSize(AbstractWorshipStep.DEFAULT_STEP_COVER_FONT_SIZE);
-                        textRun.setBold(true);
+                        textRun.setFontSize(54.0);
+                        textRun.setBold(false);
                         TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
                         textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
                         continue label1;

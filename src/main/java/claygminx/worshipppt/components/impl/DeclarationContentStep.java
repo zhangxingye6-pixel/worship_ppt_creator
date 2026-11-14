@@ -30,6 +30,11 @@ public class DeclarationContentStep extends AbstractWorshipStep {
 
     private final static Logger logger = LoggerFactory.getLogger(DeclarationContentStep.class);
 
+    /** PowerPoint 使用百分比表示段落行距，120 表示 1.2 倍行距。 */
+    private static final double CATECHISM_LINE_SPACING = 120.0;
+    /** 宣信正文统一使用 32 磅，避免长篇内容在页面中拥挤。 */
+    private static final double DECLARATION_CONTENT_FONT_SIZE = 32.0;
+
     // 在OGNl上下文容器获取服务
     private final ConfessionService confessionService;
     private final DeclarationEntity declarationEntity;
@@ -44,7 +49,7 @@ public class DeclarationContentStep extends AbstractWorshipStep {
     @Override
     public void execute() throws ScriptureNumberException, PPTLayoutException {
         logger.info("开始制作宣信内容幻灯片");
-        switch (DeclarationTitleStep.DECLARATION_METHOD_NAME) {
+        switch (declarationEntity.getTheme()) {
             case "西敏信条" -> {
                 // 解析西敏信条章节参数，获取信条节实体列表， 获取格式化的列表
                 List<String> formatConfessionContent = null;
@@ -54,9 +59,9 @@ public class DeclarationContentStep extends AbstractWorshipStep {
 
                     formatConfessionContent = confessionService.getFormatConfessionContent(confessionVerseEntities, Dict.ScriptureProperty.CONFESSION_FORMART1);
                 } catch (IOException | TemplateException e) {
-                    throw new ConfessionServiceException("宣信：内容格式化失败");
+                    throw new ConfessionServiceException("宣信：内容格式化失败：" + e.getMessage(), e);
                 } catch (ScriptureNumberException e) {
-                    throw new ScriptureNumberException(e.getMessage());
+                    throw new ScriptureNumberException(e.getMessage(), e);
                 }
 
 
@@ -85,7 +90,7 @@ public class DeclarationContentStep extends AbstractWorshipStep {
                     useCustomLanguage(contentParagraph);
                     XSLFTextRun contentTextRun = contentParagraph.addNewTextRun();
                     contentTextRun.setText(formatConfessionContent.get(i));
-                    contentTextRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
+                    contentTextRun.setFontSize(DECLARATION_CONTENT_FONT_SIZE);
                     contentTextRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
                     TextUtil.setScriptureFontColor(contentTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
 
@@ -95,7 +100,12 @@ public class DeclarationContentStep extends AbstractWorshipStep {
                 logger.info("宣信内容幻灯片制作完成");
 
             }
-            default -> throw new ScriptureNumberException("请输入有效的宣信主题(西敏信条/信条)");
+            case "西敏大要理问答", "西敏小要理问答" -> createCatechismContentSlides(declarationEntity.getTheme());
+            // 使徒信经等固定宣信内容由 procedure 后续的 FixedStep 负责，当前步骤不生成内容页。
+            case "使徒信经", "迦克墩信经", "尼西亚信经", "亚他那修信经" -> {
+                logger.debug("宣信方式 [{}] 使用固定版式，跳过要理/信条内容页", declarationEntity.getTheme());
+            }
+            default -> throw new ScriptureNumberException("请输入有效的宣信方式");
 
         }
     }
@@ -152,5 +162,81 @@ public class DeclarationContentStep extends AbstractWorshipStep {
         // TODO 加入章节编号的校验
 
 
+    }
+
+    /** 按选中的要理数据库查询题号，并使用统一的宣信模板渲染内容页。 */
+    private void createCatechismContentSlides(String catechismName)
+            throws ScriptureNumberException, PPTLayoutException {
+        List<ConfessionVerseEntity> confessionVerseEntities = validateCatechismNumber(
+                declarationEntity.getTitle(), catechismName);
+        XMLSlideShow ppt = getPpt();
+        XSLFSlideLayout layout = ppt.findLayout(getLayout());
+        for (int i = 0; i < confessionVerseEntities.size(); i++) {
+            XSLFSlide slide = ppt.createSlide(layout);
+            XSLFTextShape placeholder = TextUtil.getPlaceholderSafely(slide, 0, getLayout(), "标题部分");
+            XSLFTextRun titleTextRun = TextUtil.clearAndCreateTextRun(placeholder);
+            titleTextRun.setText("《" + confessionVerseEntities.get(i).getChapterName().trim() + "》");
+            titleTextRun.setFontSize(AbstractWorshipStep.DEFAULT_TITLE_FONT_SIZE);
+            titleTextRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+            TextUtil.setScriptureFontColor(titleTextRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
+
+            placeholder = TextUtil.getPlaceholderSafely(slide, 1, getLayout(), "正文部分");
+            placeholder.clearText();
+            renderCatechismContent(placeholder, confessionVerseEntities.get(i).getContent());
+        }
+    }
+
+    /**
+     * 按数据库中的换行渲染问答内容。每一行使用独立段落，确保“问”和“答”
+     * 在 PowerPoint 中保持明确的上下排列，而不是被当作普通空格显示。
+     */
+    private void renderCatechismContent(XSLFTextShape placeholder, String content) {
+        String[] lines = content.replace("\r", "").split("\n", -1);
+        for (String line : lines) {
+            XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
+            paragraph.setLineSpacing(CATECHISM_LINE_SPACING);
+            useCustomLanguage(paragraph);
+            XSLFTextRun contentRun = paragraph.addNewTextRun();
+            contentRun.setText(line);
+            contentRun.setFontSize(DECLARATION_CONTENT_FONT_SIZE);
+            contentRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+            // 问题作为小标题突出显示，回答保持普通字重，便于在同一页快速区分问答。
+            contentRun.setBold(line.trim().startsWith("问"));
+            TextUtil.setScriptureFontColor(contentRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
+        }
+    }
+
+    /** 解析用户输入的题号，并仅在内部补充数据库复用所需的第1章编号。 */
+    private List<ConfessionVerseEntity> validateCatechismNumber(String title, String catechismName)
+            throws ScriptureNumberException {
+        if (StringUtils.isBlank(title)) {
+            throw new ScriptureNumberException(catechismName + "内容不能为空，请填写题号范围");
+        }
+        String questionNumbers = title.trim();
+        if (!questionNumbers.matches("[0-9\\s,，、-]+")) {
+            throw new ScriptureNumberException(catechismName + "只需输入题号，例如‘1-3’或‘1,3’");
+        }
+        String chapterAndQuestionNumbers = "1:" + questionNumbers.replace('，', ',').replace('、', ',');
+        List<ConfessionQueryRequestEntity> requests = ConfessionUtil.parseChapterNumber(chapterAndQuestionNumbers);
+        List<ConfessionVerseEntity> verses = new ArrayList<>();
+        for (ConfessionQueryRequestEntity request : requests) {
+            ConfessionQueryResultEntity result = "西敏小要理问答".equals(catechismName)
+                    ? confessionService.queryShorterCatechism(request)
+                    : confessionService.queryLargerCatechism(request);
+            for (ConfessionContentEntity content : result.getConfessionContents()) {
+                for (int i = 0; i < content.getVerses().size(); i++) {
+                    ConfessionVerseEntity verse = new ConfessionVerseEntity();
+                    verse.setChapterName(content.getChapterName());
+                    verse.setChapter(content.getChapter());
+                    verse.setVerse(content.getVerses().get(i));
+                    verse.setContent(content.getContents().get(i));
+                    verses.add(verse);
+                }
+            }
+        }
+        if (verses.isEmpty()) {
+            throw new ScriptureNumberException("没有找到对应的" + catechismName + "题目，请检查题号");
+        }
+        return verses;
     }
 }
