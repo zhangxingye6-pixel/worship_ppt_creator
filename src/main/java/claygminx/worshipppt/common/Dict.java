@@ -53,6 +53,8 @@ public class Dict {
         public final static String READING_SCRIPTURE_FONT_SIZE = "ppt.readingScripture.fontSize";
         // 证道
         public final static String PREACH_SCRIPTURE_FONT_SIZE = "ppt.preachScripture.fontSize";
+        // 家事报告
+        public final static String FAMILY_REPORT_FONT_SIZE = "ppt.familyReport.fontSize";
 
         // 宣信主题
         public final static String DECLARATION_METHOD = "ppt.declaration.method";
