@@ -1,5 +1,7 @@
 package claygminx.worshipppt.components.impl;
 
+import claygminx.worshipppt.common.Dict;
+import claygminx.worshipppt.common.config.SystemConfig;
 import claygminx.worshipppt.exception.PPTLayoutException;
 import claygminx.worshipppt.util.TextUtil;
 import org.apache.poi.xslf.usermodel.*;
@@ -11,7 +13,6 @@ import java.util.List;
 public class FamilyReportStep extends AbstractWorshipStep {
 
     private final static Logger logger = LoggerFactory.getLogger(FamilyReportStep.class);
-
     private final List<String> familyReports;
 
     public FamilyReportStep(XMLSlideShow ppt, String layout, List<String> familyReports) {
@@ -35,6 +36,9 @@ public class FamilyReportStep extends AbstractWorshipStep {
                 XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
                 XSLFTextRun textRun = paragraph.addNewTextRun();
                 textRun.setText((i + 1) + "." + item);
+                textRun.setFontSize(SystemConfig.getUserConfigOrDefault(
+                        Dict.PPTProperty.FAMILY_REPORT_FONT_SIZE,
+                        AbstractWorshipStep.DEFAULT_FAMILY_REPORT_FONT_SIZE));
             }
         }
 

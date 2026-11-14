@@ -37,6 +37,7 @@ public abstract class AbstractWorshipStep implements WorshipStep {
     /** PowerPoint 使用百分比表示段落行距，105 表示 1.05 倍行距。 */
     protected static final double DEFAULT_TITLE_LINE_SPACING = 105.0;
     public final static double DEFAULT_SCRIPTURE_FONT_SIZE = 30.0;
+    public final static double DEFAULT_FAMILY_REPORT_FONT_SIZE = 28.0;
     public final static String DEFAULT_FONT_FAMILY = "Microsoft YaHei";
     public final static double DEFAULT_STEP_COVER_FONT_SIZE = 48.0;
 

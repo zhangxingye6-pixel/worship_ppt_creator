@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 public class PreachSummaryStep extends AbstractWorshipStep {
 
     private final static Logger logger = LoggerFactory.getLogger(PreachSummaryStep.class);
+    private static final double PREACH_SUMMARY_TITLE_FONT_SIZE = 48.0;
 
     private final PreachEntity preachEntity;
 
@@ -33,7 +34,7 @@ public class PreachSummaryStep extends AbstractWorshipStep {
         XSLFTextRun textRun = TextUtil.clearAndCreateTextRun(placeholder);
         textRun.setText(preachEntity.getTitle());
         textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
-        textRun.setFontSize(getStepCoverFontSize());
+        textRun.setFontSize(PREACH_SUMMARY_TITLE_FONT_SIZE);
         textRun.setBold(true);
         TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
 
