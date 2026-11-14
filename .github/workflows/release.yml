@@ -22,7 +22,7 @@ jobs:
             profile: mac-native
             artifact: worship-ppt-creator-macos-intel
 
-          - os: macos-14
+          - os: macos-15
             profile: mac-native
             artifact: worship-ppt-creator-macos-arm64
 
