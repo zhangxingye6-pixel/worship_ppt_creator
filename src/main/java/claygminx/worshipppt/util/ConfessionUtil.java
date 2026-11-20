@@ -254,6 +254,33 @@ public class ConfessionUtil {
         return firstNumber;
     }
 
+    /**
+     * 规范化信条章节输入。
+     *
+     * <p>信条主题已经由 GUI 的单选框确定，因此新格式只需要输入章节范围。
+     * 为兼容历史数据，仍允许输入“信条”或“西敏信条”前缀。</p>
+     *
+     * @param title 用户输入的章节编号
+     * @return 去除可选主题前缀后的章节编号
+     * @throws ScriptureNumberException 输入为空或不包含章节编号
+     */
+    public static String normalizeChapterNumber(String title) throws ScriptureNumberException {
+        if (title == null || title.trim().isEmpty()) {
+            throw new ScriptureNumberException("请输入信条章节编号，例如：18:1-3");
+        }
+        String normalizedTitle = title.trim();
+        if (normalizedTitle.startsWith("西敏信条")) {
+            normalizedTitle = normalizedTitle.substring("西敏信条".length()).trim();
+        } else if (normalizedTitle.startsWith("信条")) {
+            normalizedTitle = normalizedTitle.substring("信条".length()).trim();
+        }
+        if (normalizedTitle.isEmpty()) {
+            throw new ScriptureNumberException("请输入信条章节编号，例如：18:1-3");
+        }
+        getIndexOfFirstNumber(normalizedTitle);
+        return normalizedTitle;
+    }
+
 
     /**
      * 禁止外部实例化

@@ -120,16 +120,8 @@ public class DeclarationContentStep extends AbstractWorshipStep {
         if (StringUtils.isBlank(title) || StringUtils.isEmpty(title)) {
             throw new ScriptureNumberException("宣信内容不能为空，请重新输入后再尝试制作");
         }
-        int firstNumber = ConfessionUtil.getIndexOfFirstNumber(title);
-        // step3: 判断书名是否输入正确
-        String themeName = title.substring(0, firstNumber);
-        logger.info("宣信内容：输入的主题名称[{}]", themeName);
-        if (!themeName.equals("西敏信条") && !themeName.equals("信条")) {
-            // 无效的主题
-            throw new ScriptureNumberException("请输入有效的宣信主题(西敏信条/信条)");
-        }
-        // 获取章节字符串
-        String chapterNumber = title.substring(firstNumber);
+        // 主题由 Radio 决定，输入框只填写章节编号；保留旧格式前缀兼容。
+        String chapterNumber = ConfessionUtil.normalizeChapterNumber(title);
         // step4: 解析章节编号
         List<ConfessionQueryRequestEntity> requestEntities = ConfessionUtil.parseChapterNumber(chapterNumber);
         // step5: 遍历处理请求体,获取内容实体的列表

@@ -692,7 +692,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         if ("西敏小要理问答".equals(selectedDeclarationTheme)) {
             return "只输入题号，例如：1-3、1,3；程序会自动按第1章解析";
         }
-        return "例如：西敏信条18:1-3、信条20:1,3、信条18-19";
+        return "只输入章节编号，例如：18:1-3、20:1,3、18-19";
     }
 
     /**

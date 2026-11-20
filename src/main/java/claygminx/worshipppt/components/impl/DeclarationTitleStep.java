@@ -55,8 +55,7 @@ public class DeclarationTitleStep extends AbstractWorshipStep {
 
         // step1: 数据准备
         String title = declarationEntity.getTitle();
-        int firstNumber = ConfessionUtil.getIndexOfFirstNumber(title);
-        String chapterNumber = title.substring(firstNumber);
+        String chapterNumber = ConfessionUtil.normalizeChapterNumber(title);
         List<ConfessionQueryRequestEntity> requestEntities = ConfessionUtil.parseChapterNumber(chapterNumber);
         if (CollectionUtils.isEmpty(requestEntities)){
             throw new ScriptureNumberException("宣信封面：信条的章节编号输入有误，请检查后重新制作");
