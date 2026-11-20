@@ -97,6 +97,12 @@ public class Dict {
         public final static String TIME_FORMAT = "project.time.format";
     }
 
+    /** 更新网络配置，检查版本与下载附件共用。 */
+    public static class UpdateProperty {
+        public static final String PROXY_TYPE = "update.proxy.type";
+        public static final String PROXY_PORT = "update.proxy.port";
+    }
+
     /**
      * GitHub属性
      */

@@ -6,21 +6,17 @@ import claygminx.worshipppt.components.UpgradeService;
 import claygminx.worshipppt.exception.SystemException;
 import claygminx.worshipppt.common.Dict;
 import com.google.gson.Gson;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.HttpStatus;
-import org.apache.hc.core5.http.io.entity.EntityUtils;
+import claygminx.worshipppt.util.UpdateNetworkSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 public class UpgradeServiceImpl implements UpgradeService {
 
@@ -41,69 +37,55 @@ public class UpgradeServiceImpl implements UpgradeService {
 
     @Override
     public GithubReleaseEntity checkNewRelease() {
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
+        try {
             logger.info("检查升级服务");
-            // 原gitee配置
-//             int connectTimeout = SystemConfig.getInt(Dict.GiteeProperty.CONNECT_TIMEOUT);
-//             int connectRequestTimeout = SystemConfig.getInt(Dict.GiteeProperty.CONNECT_REQUEST_TIMEOUT);
-//             int responseTimeout = SystemConfig.getInt(Dict.GiteeProperty.RESPONSE_TIMEOUT);
-
             int connectTimeout = SystemConfig.getInt(Dict.GithubProperty.CONNECT_TIMEOUT);
-            int connectRequestTimeout = SystemConfig.getInt(Dict.GithubProperty.CONNECT_REQUEST_TIMEOUT);
             int responseTimeout = SystemConfig.getInt(Dict.GithubProperty.RESPONSE_TIMEOUT);
 
-//             String url = SystemConfig.getString(Dict.GiteeProperty.URL);
             String owner = SystemConfig.getString(Dict.GithubProperty.OWNER);
             String repo = SystemConfig.getString(Dict.GithubProperty.REPO);
             String url = String.format("https://api.github.com/repos/%s/%s/releases/latest", owner, repo);
             logger.debug("github request build [" + "GET " + url + "]");
-            HttpGet httpGet = new HttpGet(url);
-//            httpGet.addHeader("Content-Type", "application/json;charset=UTF-8");
-            // Github Rest Api "Get the latest release"请求
-            httpGet.addHeader("Accept", "application/vnd.github+json");
-            httpGet.addHeader("X-Github-Api-Version", "2022-11-28");
-            RequestConfig requestConfig = RequestConfig.custom()
-                    .setConnectTimeout(connectTimeout, TimeUnit.SECONDS)
-                    .setConnectionRequestTimeout(connectRequestTimeout, TimeUnit.SECONDS)
-                    .setResponseTimeout(responseTimeout, TimeUnit.SECONDS)
-                    .build();
-            httpGet.setConfig(requestConfig);
-            CloseableHttpResponse response = client.execute(httpGet);
-            logger.info("版本检查请求成功");
-
-            if (HttpStatus.SC_NOT_FOUND == response.getCode()) {
-                logger.warn("{} 返回404！", url);
-            } else if (HttpStatus.SC_OK == response.getCode()) {
-                logger.info("{} 返回200！", url);
-//                StringBuilder responseBuilder = new StringBuilder();
-
-//                try (Scanner scanner = new Scanner(response.getEntity().getContent(), StandardCharsets.UTF_8.name())) {
-//                    while (scanner.hasNextLine()) {
-//                        responseBuilder.append(scanner.nextLine());
-//                    }
-//                }
-//                String responseString = responseBuilder.toString();
-                String responseString = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                // 转码
-                responseString = new String(responseString.getBytes(), System.getProperty("file.encoding"));
-                logger.info(responseString);
-
-                GithubReleaseEntity remoteReleaseEntity = new Gson().fromJson(responseString, GithubReleaseEntity.class);
-                logger.info("response [" + remoteReleaseEntity + "]");
-                GithubReleaseEntity thisReleaseEntity = getThisProjectReleaseEntity();
-                if (compareVersion(thisReleaseEntity, remoteReleaseEntity) < 0) {
-                    // 小于远程发行包版本，所以应提示要升级
-//                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    String downloadUrl = getDownloadUrlFromGitHubBody(remoteReleaseEntity);
-                    if (downloadUrl != null) {
-                        return remoteReleaseEntity;
+            // 与安装包下载使用同一代理设置，避免版本检查与实际下载走不同网络路径。
+            HttpURLConnection connection = UpdateNetworkSupport.openConnection(URI.create(url),
+                    UpdateNetworkSupport.localProxySetting(
+                            SystemConfig.getString(Dict.UpdateProperty.PROXY_TYPE),
+                            SystemConfig.getString(Dict.UpdateProperty.PROXY_PORT)),
+                    route -> logger.info("更新检查连接：{}", route));
+            try {
+                connection.setConnectTimeout(Math.max(1, connectTimeout) * 1000);
+                connection.setReadTimeout(Math.max(1, responseTimeout) * 1000);
+                connection.setInstanceFollowRedirects(false);
+                connection.setRequestProperty("Accept", "application/vnd.github+json");
+                connection.setRequestProperty("X-Github-Api-Version", "2022-11-28");
+                connection.setRequestProperty("User-Agent", "Worship-PPT-Updater");
+                int status = connection.getResponseCode();
+                logger.info("版本检查请求成功");
+                if (HttpURLConnection.HTTP_NOT_FOUND == status) {
+                    logger.warn("{} 返回404！", url);
+                } else if (HttpURLConnection.HTTP_OK == status) {
+                    String responseString;
+                    try (InputStream input = connection.getInputStream()) {
+                        responseString = new String(input.readAllBytes(), StandardCharsets.UTF_8);
                     }
-                    logger.warn("远程发行包缺失下载地址！");
+                    GithubReleaseEntity remoteReleaseEntity = new Gson().fromJson(responseString, GithubReleaseEntity.class);
+                    // 与正式发布的 tag 规则一致，避免草稿和测试版本进入用户下载流程。
+                    if (remoteReleaseEntity == null || remoteReleaseEntity.draft() || remoteReleaseEntity.prerelease()
+                            || remoteReleaseEntity.tag_name() == null
+                            || !remoteReleaseEntity.tag_name().matches("v[0-9]+\\.[0-9]+\\.[0-9]+")) {
+                        return null;
+                    }
+                    GithubReleaseEntity thisReleaseEntity = getThisProjectReleaseEntity();
+                    if (compareVersion(thisReleaseEntity, remoteReleaseEntity) < 0) {
+                        return remoteReleaseEntity;
+                    } else {
+                        logger.info("该发行包应该是最新的，不用升级");
+                    }
                 } else {
-                    logger.info("该发行包应该是最新的，不用升级");
+                    logger.warn("{} 返回{}", url, status);
                 }
-            } else {
-                logger.warn("{} 返回{}", url, response.getCode());
+            } finally {
+                connection.disconnect();
             }
         } catch (Exception e) {
             logger.error("升级服务出现异常！", e);
@@ -161,15 +143,4 @@ public class UpgradeServiceImpl implements UpgradeService {
         return result;
     }
 
-    /**
-     * 从GitHub消息返回体中获取下载地址
-     * @param body 消息体
-     * @return 下载地址
-     */
-    protected String getDownloadUrlFromGitHubBody(GithubReleaseEntity body) {
-        if (body == null) {
-            return "";
-        }
-        return body.html_url();
-    }
 }

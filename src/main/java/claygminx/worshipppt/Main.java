@@ -19,6 +19,10 @@ public class Main extends JFrame {
     private final static Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
+        // 在首次创建网络连接前启用系统代理发现，保留用户通过 JVM 参数指定的值。
+        if (System.getProperty("java.net.useSystemProxies") == null) {
+            System.setProperty("java.net.useSystemProxies", "true");
+        }
         System.out.println(SystemConfig.getString(Dict.PPTProperty.GENERAL_LANGUAGE));
 
         try {
