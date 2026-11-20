@@ -17,7 +17,6 @@ public class Dict {
         public final static String GENERAL_FONT_FAMILY = "ppt.general.fontFamily";
         public final static String GENERAL_TITLE_FONT_SIZE = "ppt.general.titleSize";
         public final static String GENERAL_SCRIPTURE_FONT_SIZE = "ppt.general.scriptureSize";
-        public final static String GENERAL_STEP_COVER_FONT_SIZE = "ppt.general.stepCover.fontSize";
 
         public final static String GENERAL_PLACEHOLDER = "ppt.general.placeholder";
         public final static String GENERAL_LANGUAGE = "ppt.general.language";
@@ -26,8 +25,6 @@ public class Dict {
         public final static String MASTER_INITIATION_FILE_PATH = "ppt.master.initiationFilePath";
         public final static String MASTER_GENERAL_LAYOUT_NAME = "ppt.master.generalLayout.name";
         public final static String MASTER_INITIATION_POETRY_SLIDE_ORDER = "ppt.master.initiation.poetrySlide.order";
-        // 宣召
-        public final static String SUMMON_SCRIPTURE_FONT_SIZE = "ppt.summonScripture.fontSize";
         // 赦罪
         public final static String FORGIVE_SINS_SCRIPTURE_LINE_SPACING = "ppt.forgiveSinsScripture.lineSpacing";
         // 诗歌：封面
@@ -49,15 +46,9 @@ public class Dict {
         public final static String POETRY_CONTENT_FONT_SIZE = "ppt.poetryContent.fontSize";
         public final static String POETRY_CONTENT_LEFT_INSET = "ppt.poetryContent.leftInset";
         public final static String POETRY_CONTENT_SPACE_BEFORE = "ppt.poetryContent.spaceBefore";
-        // 读经
-        public final static String READING_SCRIPTURE_FONT_SIZE = "ppt.readingScripture.fontSize";
-        // 证道
-        public final static String PREACH_SCRIPTURE_FONT_SIZE = "ppt.preachScripture.fontSize";
         // 家事报告
         public final static String FAMILY_REPORT_FONT_SIZE = "ppt.familyReport.fontSize";
 
-        // 宣信主题
-        public final static String DECLARATION_METHOD = "ppt.declaration.method";
         // 圣餐：诗歌
         public final static String HOLY_COMMUNION_POETRY_TOP = "ppt.holyCommunion.poetry.top";
         // 圣餐：非会友领餐名单表格

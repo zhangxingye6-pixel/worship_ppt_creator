@@ -30,15 +30,6 @@ public class DeclarationTitleStep extends AbstractWorshipStep {
     private final DeclarationEntity declarationEntity;
     private final ConfessionService confessionService;
 
-    /**
-     * 设定宣信主题，目前是西敏信条，如果需要扩展，请增加ConfessionTheme中的映射
-     */
-    public final static String DECLARATION_METHOD_NAME;
-
-    static {
-        DECLARATION_METHOD_NAME = SystemConfig.getString(Dict.PPTProperty.DECLARATION_METHOD);
-    }
-
     public DeclarationTitleStep(XMLSlideShow ppt, String layout, ConfessionService confessionService, DeclarationEntity declarationEntity) {
         super(ppt, layout);
         this.confessionService = confessionService;
@@ -54,6 +45,9 @@ public class DeclarationTitleStep extends AbstractWorshipStep {
         }
 
         // step1: 数据准备
+        // 宣信主题以 GUI 选择为准，全称映射仅用于标题显示。
+        String theme = declarationEntity.getTheme();
+        String themeName = DeclarationTheme.DECLARATION_METHOD_MAP.getOrDefault(theme, theme);
         String title = declarationEntity.getTitle();
         String chapterNumber = ConfessionUtil.normalizeChapterNumber(title);
         List<ConfessionQueryRequestEntity> requestEntities = ConfessionUtil.parseChapterNumber(chapterNumber);
@@ -79,12 +73,12 @@ public class DeclarationTitleStep extends AbstractWorshipStep {
             for (XSLFTextRun textRun : textRuns) {
                 if (textRun.getRawText().contains(getCustomPlaceholder())) {
                     if (index == 0) {
-                        textRun.setText(textRun.getRawText().replace(getCustomPlaceholder(), DeclarationTheme.DECLARATION_METHOD_MAP.get(DECLARATION_METHOD_NAME)));
+                        textRun.setText(textRun.getRawText().replace(getCustomPlaceholder(), themeName));
                         textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
                         textRun.setFontSize(SystemConfig.getUserConfigOrDefault(Dict.PPTProperty.GENERAL_TITLE_FONT_SIZE, AbstractWorshipStep.DEFAULT_TITLE_FONT_SIZE));
                         TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
                         index++;
-                        logger.debug("填充了宣信主题：" + DeclarationTheme.DECLARATION_METHOD_MAP.get(DECLARATION_METHOD_NAME));
+                        logger.debug("填充了宣信主题：{}", themeName);
                     } else {
                         StringBuilder stringBuilder = new StringBuilder();
                         String coverTitle = stringBuilder.append("第").append(chapter).append("章 ")

@@ -81,7 +81,7 @@ public class ReadingScriptureStep extends AbstractWorshipStep {
         XSLFTextShape placeholder = null;
 //        int lineCount = 0;      // 行计数器 动态控制时使用
         int slideCount = 0;     // 页计数器 动态控制时使用
-        double scriptureFontSize = SystemConfig.getUserConfigOrDefault(Dict.PPTProperty.READING_SCRIPTURE_FONT_SIZE, DEFAULT_SCRIPTURE_FONT_SIZE);
+        double scriptureFontSize = getScriptureFontSize();
 
         List<String> validScriptureNumbers = new ArrayList<>();
         for (String scriptureNumber : scriptureNumbers) {
