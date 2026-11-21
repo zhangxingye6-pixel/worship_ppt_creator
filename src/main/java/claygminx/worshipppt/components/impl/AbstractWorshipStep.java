@@ -39,7 +39,6 @@ public abstract class AbstractWorshipStep implements WorshipStep {
     public final static double DEFAULT_SCRIPTURE_FONT_SIZE = 30.0;
     public final static double DEFAULT_FAMILY_REPORT_FONT_SIZE = 28.0;
     public final static String DEFAULT_FONT_FAMILY = "Microsoft YaHei";
-    public final static double DEFAULT_STEP_COVER_FONT_SIZE = 48.0;
 
     /**
      * 通用的构造器
@@ -88,15 +87,6 @@ public abstract class AbstractWorshipStep implements WorshipStep {
         return SystemConfig.getUserConfigOrDefault(
                 Dict.PPTProperty.GENERAL_SCRIPTURE_FONT_SIZE,
                 DEFAULT_SCRIPTURE_FONT_SIZE);
-    }
-
-    /**
-     * 读取全局阶段封面字号，配置缺失或无效时统一回退到父类默认值。
-     */
-    protected double getStepCoverFontSize() {
-        return SystemConfig.getUserConfigOrDefault(
-                Dict.PPTProperty.GENERAL_STEP_COVER_FONT_SIZE,
-                DEFAULT_STEP_COVER_FONT_SIZE);
     }
 
     /**

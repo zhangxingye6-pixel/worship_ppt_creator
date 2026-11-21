@@ -104,7 +104,7 @@ public class SummonStep extends AbstractWorshipStep {
         TextUtil.setScriptureFontColor(titleTextRun, TextUtil.FontColor.RGB_FONT_COLOR_WHITE);
 
         // 经文部分
-        double scriptureFontSize = SystemConfig.getUserConfigOrDefault(Dict.PPTProperty.SUMMON_SCRIPTURE_FONT_SIZE, AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
+        double scriptureFontSize = getScriptureFontSize();
 
         placeholder = TextUtil.getPlaceholderSafely(slide, 1, getLayout(), "正文部分");
         placeholder.clearText();

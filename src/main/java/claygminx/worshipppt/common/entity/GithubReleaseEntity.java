@@ -5,6 +5,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -22,5 +23,9 @@ public class GithubReleaseEntity {
     private Date created_at;
     // 下载地址
     private String html_url;
+    /** 仅正式发行版参与升级，附件由当前操作系统和运行架构精确匹配。 */
+    private boolean draft;
+    private boolean prerelease;
+    private List<GithubReleaseAssetEntity> assets;
 
 }

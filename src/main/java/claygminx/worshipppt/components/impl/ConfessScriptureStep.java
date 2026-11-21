@@ -22,10 +22,6 @@ import java.util.List;
  */
 public class ConfessScriptureStep extends AbstractWorshipStep {
 
-    // 默认字号常量
-    private final static double DEFAULT_FONT_SIZE = 32.0;
-    private final static double DEFAULT_TITLE_SIZE = 40.0;
-
     private final static Logger logger = LoggerFactory.getLogger(ConfessScriptureStep.class);
 
     private final String scriptureNumber;

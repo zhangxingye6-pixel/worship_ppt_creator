@@ -141,7 +141,8 @@ public class SystemConfig {
      * @return
      */
     public static String getUserConfigOrDefault(String propertiesKey, String defaultConfig) {
-        String string = getString(defaultConfig);
+        // 按配置键读取，缺失或留空时才使用调用方提供的默认值。
+        String string = getString(propertiesKey);
         if (string.isEmpty()) {
             logger.info("未获取到用户配置， 使用默认配置：" + defaultConfig);
             return defaultConfig;
