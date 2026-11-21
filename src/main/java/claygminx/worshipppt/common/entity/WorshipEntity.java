@@ -57,8 +57,8 @@ public class WorshipEntity implements Serializable {
     /** 证道内容页开关，仅用于当前生成任务，不写入敬拜配置缓存。 */
     private transient boolean preachContentsEnabled;
 
-    /** 证道内容页正文，仅用于当前生成任务，不写入敬拜配置缓存。 */
-    private transient List<String> preachContents;
+    /** 证道内容页的小标题和正文，仅用于当前任务，不写入敬拜配置缓存。 */
+    private transient List<PreachContentPageEntity> preachContents;
 
     /**
      * 圣餐
@@ -148,11 +148,11 @@ public class WorshipEntity implements Serializable {
         this.preachContentsEnabled = preachContentsEnabled;
     }
 
-    public List<String> getPreachContents() {
+    public List<PreachContentPageEntity> getPreachContents() {
         return preachContents;
     }
 
-    public void setPreachContents(List<String> preachContents) {
+    public void setPreachContents(List<PreachContentPageEntity> preachContents) {
         this.preachContents = preachContents;
     }
 

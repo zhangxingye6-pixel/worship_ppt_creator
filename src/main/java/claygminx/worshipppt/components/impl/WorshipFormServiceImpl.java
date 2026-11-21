@@ -68,6 +68,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
     private Map<String, JTextField> declarationTextFieldMap;
     private Map<String, JTextField> preachTextFieldMap;
     private ButtonGroup preachContentGroup;
+    private List<JTextField> preachContentSubtitleFieldList;
     private List<JTextArea> preachContentTextFieldList;
     private List<JLabel> preachContentPageLabelList;
     private Box preachContentRowsBox;
@@ -101,6 +102,10 @@ public class WorshipFormServiceImpl implements WorshipFormService {
     /** 行操作按钮的边长，采用紧凑的圆角方块样式。 */
     public final static int BUTTON_WIDTH = 28;
     public final static int PADDING_LEFT = 6;
+    /** 证道正文输入高度保持原样，小标题占一行，并为页与页之间预留少量间距。 */
+    private static final int PREACH_CONTENT_BODY_HEIGHT = 100;
+    private static final int PREACH_CONTENT_PAGE_HEIGHT = TEXT_FIELD_HEIGHT
+            + PREACH_CONTENT_BODY_HEIGHT + PADDING_LEFT * 2;
     public final static int V_SCROLL_BAR_SPEED = 20;
     public final static int ROW_INDEX_OFFSET = 2;
     /**
@@ -629,9 +634,16 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         publicPrayContentTextArea.setRows(5);
         publicPrayContentTextArea.setFont(UIManager.getFont("TextField.font"));
         publicPrayContentTextArea.setToolTipText("每行输入一项公祷事项，程序会自动重新编号");
-        publicPrayContentTextArea.setBorder(UIManager.getBorder("TextField.border"));
+        publicPrayContentTextArea.setBorder(new EmptyBorder(4, 4, 4, 4));
 
         JScrollPane scrollPane = new JScrollPane(publicPrayContentTextArea);
+        Color borderColor = UIManager.getColor("Component.borderColor");
+        if (borderColor == null) {
+            borderColor = new Color(110, 118, 124);
+        }
+        // 仅保留滚动容器的一像素外框，正文区域不再叠加输入框边框。
+        scrollPane.setBorder(BorderFactory.createLineBorder(borderColor, 1));
+        scrollPane.setViewportBorder(null);
         scrollPane.setPreferredSize(new Dimension(REGULAR_TABLE_RIGHT_WIDTH - PADDING_LEFT, 120));
         scrollPane.setMinimumSize(new Dimension(REGULAR_TABLE_RIGHT_WIDTH - PADDING_LEFT, 120));
         scrollPane.setMaximumSize(new Dimension(REGULAR_TABLE_RIGHT_WIDTH - PADDING_LEFT, 120));
@@ -825,6 +837,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         optionRow.add(Box.createHorizontalGlue());
         tableBox.add(optionRow);
 
+        preachContentSubtitleFieldList = new ArrayList<>();
         preachContentTextFieldList = new ArrayList<>();
         preachContentPageLabelList = new ArrayList<>();
         preachContentRowsBox = Box.createVerticalBox();
@@ -835,11 +848,11 @@ public class WorshipFormServiceImpl implements WorshipFormService {
 
         contentRadio.addActionListener(event -> {
             animateRowVisibility(preachContentAnimationState, preachContentRowsBox, tableBox,
-                    true, preachContentTextFieldList.size() * 100);
+                    true, preachContentTextFieldList.size() * PREACH_CONTENT_PAGE_HEIGHT);
         });
         noContentRadio.addActionListener(event -> {
             animateRowVisibility(preachContentAnimationState, preachContentRowsBox, tableBox,
-                    false, preachContentTextFieldList.size() * 100);
+                    false, preachContentTextFieldList.size() * PREACH_CONTENT_PAGE_HEIGHT);
         });
     }
 
@@ -851,18 +864,45 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         JLabel pageLabel = addRegularTableInputLabel(rowBox, "第" + (index + 1) + "页");
         int operationWidth = BUTTON_WIDTH * 2 + PADDING_LEFT * 2;
         int inputWidth = REGULAR_TABLE_RIGHT_WIDTH - operationWidth;
-        JTextArea textField = new JTextArea();
+        JTextField subtitleField = new PlaceholderTextField("小标题");
+        Dimension subtitleSize = new Dimension(inputWidth - PADDING_LEFT, TEXT_FIELD_HEIGHT);
+        subtitleField.setPreferredSize(subtitleSize);
+        subtitleField.setMinimumSize(subtitleSize);
+        subtitleField.setMaximumSize(subtitleSize);
+        subtitleField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        Color dividerColor = UIManager.getColor("Component.borderColor");
+        if (dividerColor == null) {
+            dividerColor = new Color(110, 118, 124);
+        }
+        // 小标题与正文共用外边框，中间仅绘制一条细线，避免独立输入框边框叠加。
+        subtitleField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, dividerColor),
+                new EmptyBorder(0, 4, 0, 4)));
+        JTextArea textField = new PlaceholderTextArea("正文");
         textField.setLineWrap(true);
         textField.setWrapStyleWord(true);
         textField.setFont(UIManager.getFont("TextField.font"));
-        textField.setBorder(UIManager.getBorder("TextField.border"));
+        textField.setBorder(new EmptyBorder(4, 4, 4, 4));
+        textField.setBackground(subtitleField.getBackground());
         JScrollPane scrollPane = new JScrollPane(textField);
-        Dimension inputSize = new Dimension(inputWidth - PADDING_LEFT, 100);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setViewportBorder(null);
+        Dimension inputSize = new Dimension(inputWidth - PADDING_LEFT, PREACH_CONTENT_BODY_HEIGHT);
         scrollPane.setPreferredSize(inputSize);
         scrollPane.setMinimumSize(inputSize);
         scrollPane.setMaximumSize(inputSize);
-        leftMiddle(rowBox, scrollPane, inputWidth, 100);
-        pageLabel.setLabelFor(textField);
+        scrollPane.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JPanel inputPanel = new JPanel(new BorderLayout());
+        inputPanel.setBorder(UIManager.getBorder("TextField.border"));
+        inputPanel.setBackground(subtitleField.getBackground());
+        inputPanel.add(subtitleField, BorderLayout.NORTH);
+        inputPanel.add(scrollPane, BorderLayout.CENTER);
+        Insets borderInsets = inputPanel.getInsets();
+        inputPanel.setPreferredSize(new Dimension(inputWidth - PADDING_LEFT,
+                TEXT_FIELD_HEIGHT + PREACH_CONTENT_BODY_HEIGHT + borderInsets.top + borderInsets.bottom));
+        leftMiddle(rowBox, inputPanel, inputWidth, PREACH_CONTENT_PAGE_HEIGHT);
+        pageLabel.setLabelFor(subtitleField);
+        preachContentSubtitleFieldList.add(index, subtitleField);
         preachContentTextFieldList.add(index, textField);
         preachContentPageLabelList.add(index, pageLabel);
 
@@ -876,7 +916,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
         operationBox.add(insertButton);
         operationBox.add(Box.createHorizontalStrut(PADDING_LEFT));
         operationBox.add(deleteButton);
-        leftMiddle(rowBox, operationBox, operationWidth, 100);
+        leftMiddle(rowBox, operationBox, operationWidth, PREACH_CONTENT_PAGE_HEIGHT);
 
         insertButton.addActionListener(event -> {
             int currentIndex = preachContentTextFieldList.indexOf(textField);
@@ -886,7 +926,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
                 if (preachContentAnimationState.expanded) {
                     animateRowVisibility(preachContentAnimationState, preachContentRowsBox,
                             (Container) preachContentRowsBox.getParent(), true,
-                            preachContentTextFieldList.size() * 100);
+                            preachContentTextFieldList.size() * PREACH_CONTENT_PAGE_HEIGHT);
                 }
                 preachContentRowsBox.revalidate();
                 preachContentRowsBox.repaint();
@@ -899,6 +939,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
             }
             int currentIndex = preachContentTextFieldList.indexOf(textField);
             if (currentIndex >= 0) {
+                preachContentSubtitleFieldList.remove(currentIndex);
                 preachContentTextFieldList.remove(currentIndex);
                 preachContentPageLabelList.remove(currentIndex);
                 preachContentRowsBox.remove(rowBox);
@@ -906,7 +947,7 @@ public class WorshipFormServiceImpl implements WorshipFormService {
                 if (preachContentAnimationState.expanded) {
                     animateRowVisibility(preachContentAnimationState, preachContentRowsBox,
                             (Container) preachContentRowsBox.getParent(), true,
-                            preachContentTextFieldList.size() * 100);
+                            preachContentTextFieldList.size() * PREACH_CONTENT_PAGE_HEIGHT);
                 }
                 preachContentRowsBox.revalidate();
                 preachContentRowsBox.repaint();
@@ -1467,16 +1508,18 @@ public class WorshipFormServiceImpl implements WorshipFormService {
 
         boolean hasPreachContents = preachContentGroup.getSelection() != null
                 && "有".equals(preachContentGroup.getSelection().getActionCommand());
-        List<String> preachContents = new ArrayList<>();
+        List<PreachContentPageEntity> preachContents = new ArrayList<>();
         if (hasPreachContents) {
             for (int i = 0; i < preachContentTextFieldList.size(); i++) {
                 String content = preachContentTextFieldList.get(i).getText().trim();
+                String subtitle = preachContentSubtitleFieldList.get(i).getText().trim();
                 if (preachContentTextFieldList.size() > 1 && isEmpty(content)) {
-                    warn("证道内容第" + (i + 1) + "页不能为空");
+                    warn("证道内容第" + (i + 1) + "页的正文不能为空");
                     return false;
                 }
-                if (!isEmpty(content)) {
-                    preachContents.add(content);
+                PreachContentPageEntity page = new PreachContentPageEntity(subtitle, content);
+                if (!page.isEmpty()) {
+                    preachContents.add(page);
                 }
             }
         }
