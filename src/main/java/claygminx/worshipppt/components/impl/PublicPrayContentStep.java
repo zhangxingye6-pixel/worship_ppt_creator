@@ -10,6 +10,7 @@ import org.apache.poi.xslf.usermodel.XSLFSlideLayout;
 import org.apache.poi.xslf.usermodel.XSLFTextParagraph;
 import org.apache.poi.xslf.usermodel.XSLFTextRun;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
+import org.apache.poi.sl.usermodel.TextParagraph;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +24,6 @@ public class PublicPrayContentStep extends AbstractWorshipStep {
 
     /** PowerPoint 使用百分比表示段落行距，120 表示1.2倍行距。 */
     private static final double LINE_SPACING = 120.0;
-    /** 固定续行缩进，略宽于编号前缀，避免续行相对正文缩进过多。 */
-    private static final double CONTINUATION_INDENT = 29.0;
 
     private final List<String> contents;
 
@@ -49,27 +48,48 @@ public class PublicPrayContentStep extends AbstractWorshipStep {
                         continue;
                     }
 
-                    XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
-                    paragraph.setLineSpacing(LINE_SPACING);
-                    useCustomLanguage(paragraph);
-
-                    String numberPrefix = displayIndex + ".";
-                    // 使用悬挂缩进：首行保留编号，自动换行后的内容与正文起始位置对齐。
-                    paragraph.setLeftMargin(CONTINUATION_INDENT);
-                    paragraph.setIndent(-CONTINUATION_INDENT);
-
-                    XSLFTextRun textRun = paragraph.addNewTextRun();
-                    textRun.setText(numberPrefix + content);
-                    textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
-                    textRun.setFontSize(AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
-                    textRun.setBold(false);
-                    TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
+                    addContentParagraph(placeholder, content, displayIndex,
+                            AbstractWorshipStep.DEFAULT_SCRIPTURE_FONT_SIZE);
                     displayIndex++;
                 }
             }
         }
 
         logger.info("公祷事项幻灯片制作完成");
+    }
+
+    /**
+     * 渲染一条公祷事项，使用与读经、证道经文相同的测量方式设置续行缩进。
+     *
+     * <p>编号与正文之间不额外插入空格，仅测量实际渲染的编号前缀；段落左边距
+     * 与首行负缩进相互抵消，使首行编号保持原位，续行与正文起点对齐。</p>
+     *
+     * @param placeholder 公祷事项正文文本框
+     * @param content 已去除输入编号的正文
+     * @param displayIndex 程序生成的显示序号
+     * @param fontSize 实际用于正文渲染的字号，单位为磅
+     * @return 已设置样式及动态悬挂缩进的段落
+     */
+    XSLFTextParagraph addContentParagraph(XSLFTextShape placeholder, String content,
+                                          int displayIndex, double fontSize) {
+        XSLFTextParagraph paragraph = placeholder.addNewTextParagraph();
+        paragraph.setLineSpacing(LINE_SPACING);
+        useCustomLanguage(paragraph);
+
+        String numberPrefix = displayIndex + ".";
+        double hangingIndent = measureTextWidth(numberPrefix, fontSize,
+                AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+        paragraph.setTextAlign(TextParagraph.TextAlign.LEFT);
+        paragraph.setLeftMargin(hangingIndent);
+        paragraph.setIndent(-hangingIndent);
+
+        XSLFTextRun textRun = paragraph.addNewTextRun();
+        textRun.setText(numberPrefix + content);
+        textRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
+        textRun.setFontSize(fontSize);
+        textRun.setBold(false);
+        TextUtil.setScriptureFontColor(textRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
+        return paragraph;
     }
 
     /**

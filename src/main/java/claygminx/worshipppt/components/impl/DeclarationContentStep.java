@@ -32,8 +32,6 @@ public class DeclarationContentStep extends AbstractWorshipStep {
 
     /** PowerPoint 使用百分比表示段落行距，120 表示 1.2 倍行距。 */
     private static final double CATECHISM_LINE_SPACING = 120.0;
-    /** 宣信正文统一使用 32 磅，避免长篇内容在页面中拥挤。 */
-    private static final double DECLARATION_CONTENT_FONT_SIZE = 32.0;
 
     // 在OGNl上下文容器获取服务
     private final ConfessionService confessionService;
@@ -90,7 +88,8 @@ public class DeclarationContentStep extends AbstractWorshipStep {
                     useCustomLanguage(contentParagraph);
                     XSLFTextRun contentTextRun = contentParagraph.addNewTextRun();
                     contentTextRun.setText(formatConfessionContent.get(i));
-                    contentTextRun.setFontSize(DECLARATION_CONTENT_FONT_SIZE);
+                    // 宣信正文与读经、证道经文共用全局字号，缺失时由父类默认值兜底。
+                    contentTextRun.setFontSize(getScriptureFontSize());
                     contentTextRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
                     TextUtil.setScriptureFontColor(contentTextRun, TextUtil.FontColor.RGB_FONT_COLOR_BLACK);
 
@@ -190,7 +189,7 @@ public class DeclarationContentStep extends AbstractWorshipStep {
             useCustomLanguage(paragraph);
             XSLFTextRun contentRun = paragraph.addNewTextRun();
             contentRun.setText(line);
-            contentRun.setFontSize(DECLARATION_CONTENT_FONT_SIZE);
+            contentRun.setFontSize(getScriptureFontSize());
             contentRun.setFontFamily(AbstractWorshipStep.DEFAULT_FONT_FAMILY);
             // 问题作为小标题突出显示，回答保持普通字重，便于在同一页快速区分问答。
             contentRun.setBold(line.trim().startsWith("问"));
