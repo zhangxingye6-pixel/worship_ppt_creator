@@ -32,14 +32,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 应用内更新下载窗口。
  *
  * <p>组件与状态只在 Swing 事件线程更新，网络及磁盘操作交给后台任务。
- * 此阶段仅下载完整安装包，安装目录、配置、母版和数据库均不做替换。</p>
+ * 下载校验成功后由独立进程安装，保留用户配置并更新随包发布的 PPT 模板。</p>
  */
 public class UpgradeDialog extends JDialog {
     private static final Logger logger = LoggerFactory.getLogger(UpgradeDialog.class);
     private static final String NETWORK_NOTICE = "下载需要访问 GitHub。\n"
             + "如果当前网络无法稳定连接 GitHub，请先连接可用的网络代理。\n"
             + "在下载窗口选择 HTTP 或 SOCKS，仅需填写本机代理端口。\n"
-            + "填写的设置会自动保存；端口留空时读取已保存设置。\n\n是否开始下载？";
+            + "填写的设置会自动保存；端口留空时读取已保存设置。\n\n"
+            + "下载并校验完成后将自动安装、退出并重启程序，请先完成当前操作。\n"
+            + "保留同名配置值，补入新增项并移除废弃项；原配置完整备份。\n"
+            + "流程 XML、PPT 模板及数据库使用新版；个人缓存不变。\n"
+            + "IDEA 开发运行只下载，不自动安装。\n\n是否开始下载并更新？";
 
     private final GithubReleaseEntity release;
     private final String owner = SystemConfig.getString(Dict.GithubProperty.OWNER);
@@ -57,6 +61,7 @@ public class UpgradeDialog extends JDialog {
     private Path downloadedFile;
     private boolean downloading;
     private boolean closeAfterCancellation;
+    private boolean installing;
 
     /**
      * 创建非模态更新提示，不影响用户继续制作 PPT。
@@ -121,7 +126,7 @@ public class UpgradeDialog extends JDialog {
         releaseButton.addActionListener(event -> openReleasePage());
         downloadButton.addActionListener(event -> {
             if (downloadedFile != null) {
-                openDirectory();
+                installDownloadedUpdate();
             } else {
                 confirmAndDownload();
             }
@@ -142,6 +147,9 @@ public class UpgradeDialog extends JDialog {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent event) {
+                if (installing) {
+                    return;
+                }
                 if (downloading) {
                     cancelDownload(true);
                 } else {
@@ -262,11 +270,11 @@ public class UpgradeDialog extends JDialog {
                     downloadedFile = get();
                     progressBar.setValue(100);
                     progressBar.setString("下载完成，SHA-256 校验通过");
-                    downloadButton.setText("打开下载目录");
-                    status.setText("已保存：" + downloadedFile
-                            + "\n请退出程序后解压安装；替换前请备份个人配置和 PPT 母版。");
+                    downloadButton.setText("安装并重启");
+                    status.setText("安装包路径：\n" + downloadedFile
+                            + "\n准备安装：迁移用户配置，更新流程 XML 和 PPT 模板。");
                     if (!closeAfterCancellation) {
-                        openDirectory();
+                        installDownloadedUpdate();
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -336,6 +344,66 @@ public class UpgradeDialog extends JDialog {
             }
             Desktop.getDesktop().open(downloadedFile.getParent().toFile());
         }, "无法打开下载目录，请根据窗口中的保存路径查找安装包。");
+    }
+
+    /** 安装准备放在后台；外部更新器确认就绪后才退出，避免更新失败时提前关闭程序。 */
+    private void installDownloadedUpdate() {
+        if (installing || downloadedFile == null) {
+            return;
+        }
+        try {
+            new UpdateInstallService().locateInstallation();
+        } catch (IOException e) {
+            status.setText(e.getMessage() + "\n安装包路径：\n" + downloadedFile);
+            downloadButton.setText("打开下载目录");
+            // 开发运行或非标准安装目录不允许覆盖程序，保留已校验的 ZIP。
+            for (java.awt.event.ActionListener listener : downloadButton.getActionListeners()) {
+                downloadButton.removeActionListener(listener);
+            }
+            downloadButton.addActionListener(event -> openDirectory());
+            return;
+        }
+        installing = true;
+        downloadButton.setEnabled(false);
+        closeButton.setEnabled(false);
+        proxyType.setEnabled(false);
+        proxyPort.setEnabled(false);
+        progressBar.setIndeterminate(true);
+        progressBar.setString("正在准备安装并重启");
+        status.setText("正在解压及检查新版文件。迁移用户配置，更新流程 XML 和 PPT 模板，旧文件将自动备份。");
+        new SwingWorker<Path, Void>() {
+            @Override
+            protected Path doInBackground() throws IOException {
+                return new UpdateInstallService().start(downloadedFile);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    Path work = get();
+                    logger.info("更新器已经就绪，退出当前程序。日志目录：{}", work);
+                    System.exit(0);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    installationFailed(e);
+                } catch (ExecutionException e) {
+                    installationFailed(e.getCause());
+                }
+            }
+        }.execute();
+    }
+
+    /** 准备失败时保持当前程序运行，允许修复权限等问题后重试。 */
+    private void installationFailed(Throwable failure) {
+        logger.error("准备自动安装失败", failure);
+        installing = false;
+        progressBar.setIndeterminate(false);
+        progressBar.setString("安装未开始，当前程序未被替换");
+        status.setText("无法准备安装：" + failure.getMessage() + "\n安装包路径：\n" + downloadedFile);
+        downloadButton.setEnabled(true);
+        closeButton.setEnabled(true);
+        proxyType.setEnabled(true);
+        proxyPort.setEnabled(true);
     }
 
     private void openReleasePage() {
